@@ -7,9 +7,12 @@ using System;
 
 namespace PlayFabIntegration
 {
+    /// <summary>
+    /// Allows one to send datas to a leaderboard as well as get them
+    /// </summary>
     public class LeaderboardManager
     {
-        private event Action<GetLeaderboardResult> onGetLeaderboardEvent;
+        private event Action<List<PlayerLeaderboardEntry>> onGetLeaderboardEvent;
 
         #region Send Datas
 
@@ -44,9 +47,9 @@ namespace PlayFabIntegration
 
         #region Get Datas
 
-        public void GetLeaderboard(string leaderboardName, int maxResultsCount, Action<GetLeaderboardResult> onGetLeaderboard, int startPosition = 0)
+        public void GetLeaderboard(string leaderboardName, int maxResultsCount, Action<List<PlayerLeaderboardEntry>> onGetLeaderboard, int startPosition = 0)
         {
-            onGetLeaderboard = onGetLeaderboardEvent;
+            onGetLeaderboardEvent = onGetLeaderboard;
 
             var request = new GetLeaderboardRequest
             {
@@ -61,12 +64,37 @@ namespace PlayFabIntegration
         private void OnGetLeaderboard(GetLeaderboardResult result)
         {
             Debug.Log("Succesfully got leaderboard");
-            onGetLeaderboardEvent?.Invoke(result);
+            onGetLeaderboardEvent?.Invoke(result.Leaderboard);
         }
 
         private void OnFailedToGetLeaderboard(PlayFabError error)
         {
             Debug.Log($"Couldn't get leaderboard : {error.GenerateErrorReport()}");
+            onGetLeaderboardEvent?.Invoke(null);
+        }
+
+        public void GetLeaderboardAroundPlayer(string Leaderboard, int maxResults, Action<List<PlayerLeaderboardEntry>> onComplete)
+        {
+            onGetLeaderboardEvent = onComplete;
+
+            var request = new GetLeaderboardAroundPlayerRequest
+            {
+                StatisticName = Leaderboard,
+                MaxResultsCount = maxResults
+            };
+
+            PlayFabClientAPI.GetLeaderboardAroundPlayer(request, OnGetLeaderboardAroundPlayer, OnFailedToGetLeaderboardAroundPlayer);
+        }
+
+        private void OnGetLeaderboardAroundPlayer(GetLeaderboardAroundPlayerResult results)
+        {
+            Debug.Log("Succesfully got leaderboard around player");
+            onGetLeaderboardEvent?.Invoke(results.Leaderboard);
+        }
+
+        private void OnFailedToGetLeaderboardAroundPlayer(PlayFabError error)
+        {
+            Debug.Log("Failed to get leaderboard around player");
             onGetLeaderboardEvent?.Invoke(null);
         }
 

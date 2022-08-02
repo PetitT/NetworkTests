@@ -7,10 +7,18 @@ using System;
 
 namespace PlayFabIntegration
 {
+    /// <summary>
+    /// This class allows one to access the datas specific to the title
+    /// </summary>
     public class TitleDataManager
     {
         private event Action<Dictionary<string, string>> onGetTitleDatasEvent;
 
+        /// <summary>
+        /// The callback returns a dictionnary containing all the 
+        /// </summary>
+        /// <param name="onGetResult"> Callback returning a dictionnary with the title datas </param>
+        /// <param name="specificKey"> If a key is specified, the dictionnary will only contain the specific key </param>
         public void GetTitleDatas(Action<Dictionary<string, string>> onGetResult, string specificKey = null)
         {
             onGetTitleDatasEvent = onGetResult;

@@ -17,9 +17,11 @@ public class TestEditor : Editor
         test = target as Test;
 
         GUILayout.Space(10);
+        GUILayout.Label("----LOGIN----");
+        test.autoLoginOnStart = EditorGUILayout.Toggle("Login on start", test.autoLoginOnStart); 
         if (GUILayout.Button("Login"))
         {
-            manager.LoginManager.LogInWithDeviceID();
+            test.Login();
         }
 
         GUILayout.Space(10);
@@ -34,7 +36,7 @@ public class TestEditor : Editor
 
         GUILayout.Space(10);
         GUILayout.Label("----DISPLAY NAME----");
-        test.newDisplayName = EditorGUILayout.TextField("New Name", test.newDisplayName );
+        test.newDisplayName = EditorGUILayout.TextField("New Name", test.newDisplayName);
         if (GUILayout.Button("Update display name"))
         {
             manager.LoginManager.UpdateDisplayName(test.newDisplayName);
@@ -63,9 +65,9 @@ public class TestEditor : Editor
 
         EditorGUILayout.BeginHorizontal();
         GUILayout.Label("Object");
-        test.myClass.whatever = EditorGUILayout.TextField(test.myClass.whatever);
-        test.myClass.number = EditorGUILayout.IntField(test.myClass.number);
-        test.myClass.furotu = EditorGUILayout.FloatField(test.myClass.furotu);
+        test.myClass.myString = EditorGUILayout.TextField(test.myClass.myString);
+        test.myClass.myInt = EditorGUILayout.IntField(test.myClass.myInt);
+        test.myClass.myfloat = EditorGUILayout.FloatField(test.myClass.myfloat);
         EditorGUILayout.EndHorizontal();
         if (GUILayout.Button("Save Player Data key and value"))
         {
@@ -75,9 +77,37 @@ public class TestEditor : Editor
         {
             test.SaveDataAsJSON();
         }
-        if (GUILayout.Button("GetPlayerDatas"))
+        if (GUILayout.Button("Get all player datas"))
         {
-            test.GetPlayerDatas();
+            test.GetAllPlayerDatas();
         }
+        if (GUILayout.Button("Get single player data"))
+        {
+            test.GetSpecificPlayerData();
+        }
+        if (GUILayout.Button("Get generic player data"))
+        {
+            test.GetGenericData();
+        }
+
+        GUILayout.Space(10);
+        GUILayout.Label("----LEADERBOARD----");
+        test.leaderboardName = EditorGUILayout.TextField("Leaderboard", test.leaderboardName);
+        test.score = EditorGUILayout.IntField("Score", test.score);
+        test.maxResultsCount = EditorGUILayout.IntField("Max results count", test.maxResultsCount);
+        test.startPosition = EditorGUILayout.IntField("Start position", test.startPosition);
+        if(GUILayout.Button("Send Score to leaderboard"))
+        {
+            test.SendDataToLeaderboard();
+        }
+        if(GUILayout.Button("Get leaderboard"))
+        {
+            test.GetDataFromLeaderboard();
+        }
+        if(GUILayout.Button("Get leaderboard around player"))
+        {
+            test.GetDataFromLeaderboardAroundPlayer();
+        }
+
     }
 }

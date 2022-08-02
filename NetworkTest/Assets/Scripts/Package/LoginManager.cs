@@ -7,6 +7,9 @@ using System;
 
 namespace PlayFabIntegration
 {
+    /// <summary>
+    /// The login manager allows one to connect to a playfab account and to set their display name
+    /// </summary>
     public class LoginManager
     {
         public event Action onSuccessfulLogIn;
@@ -15,13 +18,20 @@ namespace PlayFabIntegration
 
         public bool IsLoggedIn { get; private set; }
         public string DisplayName { get; private set; }
+        public string LoggedInPlayFabID { get; private set; }
 
         #region LOGIN
         public void LogInWithDeviceID()
         {
+            if (IsLoggedIn)
+            {
+                Debug.Log("Already logged in");
+                return;
+            }
+
             LoginWithCustomIDRequest request = new LoginWithCustomIDRequest
             {
-                CustomId = SystemInfo.deviceUniqueIdentifier,
+                CustomId = SystemInfo.deviceUniqueIdentifier, //Connecting with the device identifier means there is one account per device
                 CreateAccount = true,
                 InfoRequestParameters = new GetPlayerCombinedInfoRequestParams
                 {
@@ -36,8 +46,15 @@ namespace PlayFabIntegration
         {
             Debug.Log("Successful login!");
             IsLoggedIn = true;
+            LoggedInPlayFabID = result.PlayFabId;
+            string newDisplayName = result.InfoResultPayload.PlayerProfile.DisplayName;
+            if (string.IsNullOrEmpty(newDisplayName))
+            {
+                DisplayName = newDisplayName;
+            }
+
+
             onSuccessfulLogIn?.Invoke();
-            DisplayName = result.InfoResultPayload.PlayerProfile.DisplayName;
         }
 
         private void OnError(PlayFabError error)
