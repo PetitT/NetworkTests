@@ -19,9 +19,17 @@ namespace PlayFabIntegration
         public bool IsLoggedIn { get; private set; }
         public string DisplayName { get; private set; }
         public string LoggedInPlayFabID { get; private set; }
+        public string EntityID { get; private set; }
+        public string SessionTicket { get; private set; }
+
+        public enum LoginMethod { DeviceID, Random }
 
         #region LOGIN
-        public void LogInWithDeviceID()
+        /// <summary>
+        /// Logs the player to an account. Logging with Device ID means there is one account per device. Logging with random ID serves as testing tool
+        /// </summary>
+        /// <param name="method"></param>
+        public void LogInWithID(LoginMethod method = LoginMethod.DeviceID)
         {
             if (IsLoggedIn)
             {
@@ -29,9 +37,11 @@ namespace PlayFabIntegration
                 return;
             }
 
+            string ID = method == LoginMethod.DeviceID ? SystemInfo.deviceUniqueIdentifier : UnityEngine.Random.Range(10000, 99999).ToString();
+
             LoginWithCustomIDRequest request = new LoginWithCustomIDRequest
             {
-                CustomId = SystemInfo.deviceUniqueIdentifier, //Connecting with the device identifier means there is one account per device
+                CustomId = ID,
                 CreateAccount = true,
                 InfoRequestParameters = new GetPlayerCombinedInfoRequestParams
                 {
@@ -47,12 +57,17 @@ namespace PlayFabIntegration
             Debug.Log("Successful login!");
             IsLoggedIn = true;
             LoggedInPlayFabID = result.PlayFabId;
-            string newDisplayName = result.InfoResultPayload.PlayerProfile.DisplayName;
-            if (string.IsNullOrEmpty(newDisplayName))
-            {
-                DisplayName = newDisplayName;
-            }
+            SessionTicket = result.SessionTicket;
+            EntityID = result.EntityToken.Entity.Id;
 
+            if (result.InfoResultPayload.PlayerProfile != null)
+            {
+                string newDisplayName = result.InfoResultPayload.PlayerProfile.DisplayName;
+                if (!string.IsNullOrEmpty(newDisplayName))
+                {
+                    DisplayName = newDisplayName;
+                }
+            }
 
             onSuccessfulLogIn?.Invoke();
         }

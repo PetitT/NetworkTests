@@ -19,9 +19,13 @@ public class TestEditor : Editor
         GUILayout.Space(10);
         GUILayout.Label("----LOGIN----");
         test.autoLoginOnStart = EditorGUILayout.Toggle("Login on start", test.autoLoginOnStart); 
-        if (GUILayout.Button("Login"))
+        if (GUILayout.Button("Login with device"))
         {
-            test.Login();
+            test.LoginWithDeviceID();
+        }
+        if(GUILayout.Button("Random login"))
+        {
+            test.CreateNewRandomAccount();
         }
 
         GUILayout.Space(10);
@@ -31,7 +35,8 @@ public class TestEditor : Editor
         GUILayout.Toggle(manager.IsLoggedIn, "Is Connected");
         GUI.enabled = true;
         GUILayout.BeginHorizontal();
-        GUILayout.Label($"Current Name : {manager.DisplayName}");
+        string name = string.IsNullOrEmpty(manager.DisplayName) ? "Current user has no display name" : $"Display name : {manager.DisplayName}";
+        GUILayout.Label(name);
         GUILayout.EndHorizontal();
 
         GUILayout.Space(10);

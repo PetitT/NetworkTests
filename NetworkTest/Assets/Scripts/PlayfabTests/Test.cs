@@ -22,20 +22,36 @@ public class Test : MonoBehaviour
     [HideInInspector] public int maxResultsCount;
     [HideInInspector] public int startPosition;
 
+    [HideInInspector] public int testElo;
     private void Awake()
     {
         playFabManager = GetComponent<PlayFabManager>();
-        playFabManager.LoginManager.onSuccessfulLogIn += LoginManager_onSuccessfulLogIn;
     }
 
     private void Start()
     {
         if (autoLoginOnStart)
         {
-            Login();
+            LoginWithDeviceID();
         }
     }
-    public void Login()
+    public void LoginWithDeviceID()
+    {
+        Login(LoginManager.LoginMethod.DeviceID);
+    }
+    public void CreateNewRandomAccount()
+    {
+        Login(LoginManager.LoginMethod.Random);
+        playFabManager.LoginManager.onSuccessfulLogIn += LoginManager_onSuccessfulLogIn;
+    }
+
+    private void LoginManager_onSuccessfulLogIn()
+    {
+        playFabManager.LoginManager.UpdateDisplayName(UnityEngine.Random.Range(0, 1000).ToString());
+        playFabManager.LoginManager.onSuccessfulLogIn -= LoginManager_onSuccessfulLogIn;
+    }
+
+    private void Login(LoginManager.LoginMethod method)
     {
         if (playFabManager.IsLoggedIn)
         {
@@ -43,12 +59,7 @@ public class Test : MonoBehaviour
             return;
         }
 
-        playFabManager.LoginManager.LogInWithDeviceID();
-    }
-
-    private void LoginManager_onSuccessfulLogIn()
-    {
-        Debug.Log("LOGGED IN");
+        playFabManager.LoginManager.LogInWithID(method);
     }
 
     public void GetTitleDatas()
@@ -88,7 +99,7 @@ public class Test : MonoBehaviour
     }
     private void OnGetAllPlayerDatas(Dictionary<string, string> result)
     {
-        if(result == null)
+        if (result == null)
         {
             Debug.Log("Player had no data");
             return;
@@ -107,7 +118,7 @@ public class Test : MonoBehaviour
 
     private void OnGetSinglePlayerData(string obj)
     {
-        if(obj == null)
+        if (obj == null)
         {
             Debug.Log("Player data didn't contain key");
             return;
@@ -123,7 +134,7 @@ public class Test : MonoBehaviour
 
     private void OnGetGenericPlayerData(MyClass obj)
     {
-        if(obj == null)
+        if (obj == null)
         {
             Debug.Log("Object is null");
             return;
@@ -149,13 +160,13 @@ public class Test : MonoBehaviour
 
     private void OnGetLeaderboard(List<PlayerLeaderboardEntry> result)
     {
-        if(result == null)
+        if (result == null)
         {
             Debug.Log("No leaderboard");
             return;
         }
 
-        if(result.Count == 0)
+        if (result.Count == 0)
         {
             Debug.Log("No entries");
             return;
@@ -166,6 +177,37 @@ public class Test : MonoBehaviour
             string isMe = item.PlayFabId == playFabManager.PlayfabID ? "--- ME ---" : "";
             Debug.Log($"{item.Position} - {item.DisplayName} : {item.StatValue}  {isMe}");
         }
+    }
+
+    private void OnGUI()
+    {
+        if (GUI.Button(
+            new Rect(0, 0, 100, 50),
+            "Random Login"
+            ))
+        {
+            CreateNewRandomAccount();
+        }
+        if (GUI.Button(
+            new Rect(0, 50, 100, 50),
+            "Find match"
+            ))
+        {
+            FindObjectOfType<PlayFabMatchmaking>().StartMatchmaking(testElo);
+            Debug.Log(testElo);
+        }
+
+        if(GUI.Button(
+            new Rect(0,100,100,50),
+            "Add elo"
+            ))
+        {
+            testElo++;
+        }
+
+        GUI.Label(new Rect(150, 0, 100, 50), $"Current name: {playFabManager.DisplayName}" );
+        GUI.Label(new Rect(150, 50, 100, 50), FindObjectOfType<PlayFabMatchmaking>().status);
+        GUI.Label(new Rect(150, 100, 100, 50), testElo.ToString());
     }
 }
 

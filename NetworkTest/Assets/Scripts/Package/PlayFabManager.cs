@@ -12,6 +12,8 @@ namespace PlayFabIntegration
         public bool IsLoggedIn => LoginManager.IsLoggedIn;
         public string DisplayName => LoginManager.DisplayName;
         public string PlayfabID => LoginManager.LoggedInPlayFabID;
+        public string SessionTicket => LoginManager.SessionTicket;
+        public string EntityID => LoginManager.EntityID;
 
         public LoginManager LoginManager { get; private set; } = new LoginManager();
         public LeaderboardManager LeaderboardManager { get; private set; } = new LeaderboardManager();
