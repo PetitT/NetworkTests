@@ -468,7 +468,6 @@ GameObject:
   - component: {fileID: 2062285194}
   - component: {fileID: 2062285193}
   - component: {fileID: 2062285195}
-  - component: {fileID: 2062285196}
   m_Layer: 0
   m_Name: PlayFab
   m_TagString: Untagged
@@ -530,19 +529,5 @@ MonoBehaviour:
   maxResultsCount: 0
   startPosition: 0
   testElo: 0
---- !u!114 &2062285196
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2062285191}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b6d945213f2fdd444a17650462a4b1de, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  manager: {fileID: 2062285193}
-  queueName: QuickMatch
-  cancelDelay: 10
-  status: 
+  matchmakingQueue: QuickMatch
+  maxMatchmakingTime: 30

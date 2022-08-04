@@ -23,6 +23,10 @@ public class Test : MonoBehaviour
     [HideInInspector] public int startPosition;
 
     [HideInInspector] public int testElo;
+
+    [HideInInspector] public string matchmakingQueue;
+    [HideInInspector] public int maxMatchmakingTime;
+
     private void Awake()
     {
         playFabManager = GetComponent<PlayFabManager>();
@@ -189,25 +193,41 @@ public class Test : MonoBehaviour
             CreateNewRandomAccount();
         }
         if (GUI.Button(
+            new Rect(100, 0, 100, 50),
+            "Device Login"
+            ))
+        {
+            LoginWithDeviceID();
+        }
+
+        if (GUI.Button(
             new Rect(0, 50, 100, 50),
             "Find match"
             ))
         {
-            FindObjectOfType<PlayFabMatchmaking>().StartMatchmaking(testElo);
-            Debug.Log(testElo);
+            playFabManager.MatchmakingManager.StartMatchmaking(matchmakingQueue, maxMatchmakingTime, new { elo = testElo });
         }
 
-        if(GUI.Button(
-            new Rect(0,100,100,50),
+        if (GUI.Button(
+            new Rect(0, 100, 100, 50),
             "Add elo"
             ))
         {
             testElo++;
         }
 
-        GUI.Label(new Rect(150, 0, 100, 50), $"Current name: {playFabManager.DisplayName}" );
-        GUI.Label(new Rect(150, 50, 100, 50), FindObjectOfType<PlayFabMatchmaking>().status);
-        GUI.Label(new Rect(150, 100, 100, 50), testElo.ToString());
+        if (GUI.Button(
+            new Rect(100, 50, 175, 50),
+            "Cancel all matchmaking"
+            ))
+        {
+            playFabManager.MatchmakingManager.CancelAllMatchmakingQueuesForUser();
+        }
+
+        string displayName = playFabManager.IsLoggedIn ? $"Logged in as -{playFabManager.DisplayName}-" : "Not connected";
+        GUI.Label(new Rect(210, 15, 200, 50), displayName);
+        GUI.Label(new Rect(280, 65, 200, 50), playFabManager.MatchmakingManager.Status);
+        GUI.Label(new Rect(110, 115, 200, 50), $"Elo : {testElo}");
     }
 }
 

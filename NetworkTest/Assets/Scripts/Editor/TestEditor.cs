@@ -114,5 +114,10 @@ public class TestEditor : Editor
             test.GetDataFromLeaderboardAroundPlayer();
         }
 
+        GUILayout.Space(10);
+        GUILayout.Label("---MATCHMAKING---");
+        test.matchmakingQueue = EditorGUILayout.TextField("Queue name", test.matchmakingQueue);
+        test.maxMatchmakingTime = EditorGUILayout.IntField("Max Matchmaking time", test.maxMatchmakingTime);
+
     }
 }

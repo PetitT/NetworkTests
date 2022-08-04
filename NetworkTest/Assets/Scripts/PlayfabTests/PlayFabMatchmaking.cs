@@ -48,11 +48,6 @@ public class PlayFabMatchmaking : MonoBehaviour
         );
     }
 
-    public class MatchmakingAttributes
-    {
-        public int Elo;
-    }
-
     private void OnMatchmakingTicketCreated(CreateMatchmakingTicketResult result)
     {
         Debug.Log("Succesfully created matchmaking ticket");
@@ -146,6 +141,28 @@ public class PlayFabMatchmaking : MonoBehaviour
         Debug.Log("Matchmaking was canceled");
     }
 
+    [ContextMenu("Cancell all matchmaking tickets")]
+    public void CancelAllMatchmakingQueuesForUser()
+    {
+
+        PlayFabMultiplayerAPI.CancelAllMatchmakingTicketsForPlayer(
+            new CancelAllMatchmakingTicketsForPlayerRequest
+            {
+                QueueName = queueName
+            },
+            OnCanceledAllMatchmaking,
+            OnFailedToCancelAllMatchmaking
+            );
+    }
+
+    private void OnCanceledAllMatchmaking(CancelAllMatchmakingTicketsForPlayerResult result)
+    {
+        Debug.Log("All matcmaking tickets were canceled for this queue");
+        Cancel();
+    }
+
+
+
     #region Errors
     private void OnFailedToCreateMatchmaking(PlayFabError error)
     {
@@ -165,6 +182,11 @@ public class PlayFabMatchmaking : MonoBehaviour
     private void OnFailedToCancelMatchmakingTicket(PlayFabError error)
     {
         Debug.Log($"Couldn't cancel matchmaking ticket : {error.GenerateErrorReport()}");
+    }
+
+    private void OnFailedToCancelAllMatchmaking(PlayFabError error)
+    {
+        Debug.Log($"Couldn't cancel all matchmaking ticket : {error.GenerateErrorReport()}");
     }
     #endregion
 }

@@ -10,7 +10,7 @@ namespace PlayFabIntegration
     /// <summary>
     /// The login manager allows one to connect to a playfab account and to set their display name
     /// </summary>
-    public class LoginManager
+    public class LoginManager 
     {
         public event Action onSuccessfulLogIn;
         public event Action onFailedToLogIn;
