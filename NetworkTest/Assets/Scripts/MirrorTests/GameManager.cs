@@ -5,18 +5,24 @@ using UnityEngine;
 
 public class GameManager : NetworkBehaviour
 {
-    [SyncVar(hook = nameof(Bigule))] public Color cubeColor = Color.black;
+    [SyncVar(hook = nameof(UpdateColor))] public Color cubeColor = Color.black;
     public MeshRenderer cubeMesh;
 
     private void Update()
     {
         if (isServer)
         {
-            if (Input.GetKeyDown(KeyCode.Space)) { cubeColor = Random.ColorHSV(); }
+            if (Input.GetKeyDown(KeyCode.Space))
+            {
+                for (int i = 0; i < 5; i++)
+                {
+                    cubeColor = Random.ColorHSV();
+                }
+            }
         }
     }
 
-    private void Bigule(Color oldValue, Color newValue)
+    private void UpdateColor(Color oldValue, Color newValue)
     {
         cubeMesh.material.color = cubeColor;
     }

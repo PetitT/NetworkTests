@@ -166,6 +166,8 @@ namespace PlayFabIntegration
 
         public void CancelAllMatchmakingQueuesForUser()
         {
+            if (!isPollingTicket) return;
+
             PlayFabMultiplayerAPI.CancelAllMatchmakingTicketsForPlayer(
                 new CancelAllMatchmakingTicketsForPlayerRequest
                 {
