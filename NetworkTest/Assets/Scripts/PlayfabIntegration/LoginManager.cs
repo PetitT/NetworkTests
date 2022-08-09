@@ -12,7 +12,7 @@ namespace PlayFabIntegration
     /// </summary>
     public class LoginManager 
     {
-        public event Action onSuccessfulLogIn;
+        public event Action<LoginResult> onSuccessfulLogIn;
         public event Action onFailedToLogIn;
         public event Action<string> onUpdatedDisplayName;
 
@@ -82,7 +82,7 @@ namespace PlayFabIntegration
                 }
             }
 
-            onSuccessfulLogIn?.Invoke();
+            onSuccessfulLogIn?.Invoke(result);
         }
 
         private void OnError(PlayFabError error)

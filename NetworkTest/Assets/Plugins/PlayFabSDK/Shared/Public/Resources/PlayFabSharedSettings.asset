@@ -15,7 +15,7 @@ MonoBehaviour:
   TitleId: E37AF
   DeveloperSecretKey: 1RAE5MNXX6FG8O58BEGPOT4IE1TYCCRQY4AHRMB6Y87SUXAIJT
   ProductionEnvironmentUrl: 
-  RequestType: 2
+  RequestType: 0
   DisableDeviceInfo: 0
   DisableFocusTimeCollection: 0
   RequestTimeout: 2000

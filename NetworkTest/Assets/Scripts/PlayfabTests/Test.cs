@@ -49,7 +49,7 @@ public class Test : MonoBehaviour
         playFabManager.LoginManager.onSuccessfulLogIn += LoginManager_onSuccessfulLogIn;
     }
 
-    private void LoginManager_onSuccessfulLogIn()
+    private void LoginManager_onSuccessfulLogIn(LoginResult result)
     {
         playFabManager.LoginManager.UpdateDisplayName(UnityEngine.Random.Range(0, 1000).ToString());
         playFabManager.LoginManager.onSuccessfulLogIn -= LoginManager_onSuccessfulLogIn;
@@ -205,7 +205,22 @@ public class Test : MonoBehaviour
             "Find match"
             ))
         {
-            playFabManager.MatchmakingManager.StartMatchmaking(matchmakingQueue, maxMatchmakingTime, new { elo = testElo });
+            playFabManager.MatchmakingManager.StartMatchmaking(
+                matchmakingQueue,
+                maxMatchmakingTime,
+                new
+                {
+                    elo = testElo,
+                    latencies = new object[]
+                    {
+                        new
+                        {
+                            region = "NorthEurope",
+                            latency = 100
+                        }
+                    }
+                }
+                );
         }
 
         if (GUI.Button(

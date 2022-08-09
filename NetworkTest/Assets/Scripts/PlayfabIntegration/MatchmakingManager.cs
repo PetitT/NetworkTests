@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using PlayFab;
 using PlayFab.MultiplayerModels;
+using Mirror;
 
 namespace PlayFabIntegration
 {
@@ -55,6 +56,7 @@ namespace PlayFabIntegration
                 {
                     Creator = new MatchmakingPlayer
                     {
+                        
                         Entity = new EntityKey
                         {
                             Id = playFabManager.EntityID,
@@ -62,14 +64,14 @@ namespace PlayFabIntegration
                         },
                         Attributes = new MatchmakingPlayerAttributes
                         {
-                            DataObject = customAttributes 
+                            DataObject = customAttributes
                         },
                     },
-
+                    
                     GiveUpAfterSeconds = giveUpAfterSeconds,
                     QueueName = currentQueueName
                 },
-
+                
                 OnMatchmakingTicketCreated,
                 OnFailedToCreateMatchmaking
             );
@@ -138,6 +140,14 @@ namespace PlayFabIntegration
         private void OnGetMatch(GetMatchResult result)
         {
             Status = $"{result.Members[0].Entity.Id} vs {result.Members[1].Entity.Id}";
+
+            Debug.Log($"Server details : {result.ServerDetails.IPV4Address} - {result.ServerDetails.Ports[0].Num}");
+
+            //TODO CLEAN THIS 
+            CustomNetworkManager manager = GameObject.FindObjectOfType<CustomNetworkManager>();
+            manager.networkAddress = result.ServerDetails.IPV4Address;
+            manager.Transport.port = (ushort)result.ServerDetails.Ports[0].Num;
+            manager.StartClient();
         }
 
         #endregion

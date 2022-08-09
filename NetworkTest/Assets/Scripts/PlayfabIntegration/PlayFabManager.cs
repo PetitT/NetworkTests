@@ -9,6 +9,20 @@ namespace PlayFabIntegration
     /// </summary>
     public class PlayFabManager : MonoBehaviour
     {
+        private static PlayFabManager instance;
+        public static PlayFabManager Instance
+        {
+            get
+            {
+                if (instance == null)
+                {
+                    instance = FindObjectOfType<PlayFabManager>();
+                }
+                return instance;
+            }
+        }
+
+
         public bool IsLoggedIn => LoginManager.IsLoggedIn;
         public string DisplayName => LoginManager.DisplayName;
         public string PlayfabID => LoginManager.LoggedInPlayFabID;
