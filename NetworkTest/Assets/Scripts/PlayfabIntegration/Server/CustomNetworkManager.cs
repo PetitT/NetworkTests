@@ -37,12 +37,8 @@ public class CustomNetworkManager : NetworkManager
     public override void Awake()
     {
         base.Awake();
-
-        if (Config.buildType == BuildType.REMOTE_SERVER)
-        {
-            Connections = new List<UnityNetworkConnection>();
-            NetworkServer.RegisterHandler<ReceiveAuthenticateMessage>(OnRecieveAuthenticate);
-        }
+        Connections = new List<UnityNetworkConnection>();
+        NetworkServer.RegisterHandler<ReceiveAuthenticateMessage>(OnRecieveAuthenticate);
     }
 
     private void OnRecieveAuthenticate(NetworkConnection _conn, ReceiveAuthenticateMessage msgType)
@@ -58,41 +54,44 @@ public class CustomNetworkManager : NetworkManager
 
     public override void OnServerConnect(NetworkConnectionToClient conn)
     {
-        if (Config.buildType == BuildType.LOCAL_SERVER)
-        {
-            base.OnServerConnect(conn);
-            return;
-        }
-
+        base.OnServerConnect(conn);
         var uconn = Connections.Find(c => c.ConnectionId == conn.connectionId);
         if (uconn == null)
         {
+            string LobbyID = "";
+            if (_configuration.buildType == BuildType.REMOTE_SERVER)
+            {
+                LobbyID = PlayFabMultiplayerAgentAPI.SessionConfig.SessionId;
+            }
+
             Connections.Add(new UnityNetworkConnection()
             {
                 Connection = conn,
                 ConnectionId = conn.connectionId,
-                LobbyId = PlayFabMultiplayerAgentAPI.SessionConfig.SessionId
+                LobbyId = LobbyID
             });
         }
 
+        Debug.Log($"Player connected : {conn.connectionId}");
     }
 
     public override void OnServerDisconnect(NetworkConnectionToClient conn)
     {
-        if(Config.buildType == BuildType.LOCAL_SERVER)
-        {
-            base.OnServerDisconnect(conn);
-            return;
-        }
+        base.OnServerDisconnect(conn);
 
         var uconn = Connections.Find(c => c.ConnectionId == conn.connectionId);
         if (uconn != null)
         {
-            if (!string.IsNullOrEmpty(uconn.PlayFabId))
-            {
-                OnPlayerRemoved?.Invoke(uconn.PlayFabId);
-            }
+            OnPlayerRemoved?.Invoke(uconn.PlayFabId);
             Connections.Remove(uconn);
+        }
+
+        Debug.Log($"Player disconnected : {conn.connectionId}");
+
+        if (Connections.Count == 0)
+        {
+            Debug.Log("No connected player anymore");
+            StartCoroutine(ShutDown());
         }
     }
 
@@ -103,4 +102,16 @@ public class CustomNetworkManager : NetworkManager
         StartClient();
     }
 
+    public IEnumerator ShutDown()
+    {
+        for (int i = 3; i > 0; i++)
+        {
+            Debug.Log($"Server shutting down in {i}");
+            yield return new WaitForSeconds(1f);
+        }
+
+        Debug.Log("Shutting down...");
+        yield return new WaitForSeconds(1f);
+        Application.Quit();
+    }
 }

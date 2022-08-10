@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Configuration
   m_EditorClassIdentifier: 
   buildType: 0
-  buildId: 
+  buildId: 5d022648-521a-488d-8ed6-f8888764d12b
   ipAddress: 
   port: 0
   playFabDebugging: 1

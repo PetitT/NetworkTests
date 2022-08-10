@@ -1,4 +1,5 @@
 using Mirror;
+using PlayFab.MultiplayerAgent.Model;
 using System;
 
 [Serializable]

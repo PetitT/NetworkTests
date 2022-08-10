@@ -13,7 +13,7 @@ public class ServerStartUp : MonoBehaviour
     [SerializeField] float _serverShutdownTimer = 500f;
     [SerializeField] bool _debugging = true;
 
-    private List<ConnectedPlayer> _connectedPlayers;
+    private List<ConnectedPlayer> _connectedPlayers; //A list of players that is sent to keep playfab updated, don't use it for gameplay
 
     protected CustomNetworkManager _room;
     protected CustomNetworkManager Room
@@ -26,7 +26,7 @@ public class ServerStartUp : MonoBehaviour
     }
 
     private void Start()
-    {        
+    {
         switch (Room.Config.buildType)
         {
             case BuildType.LOCAL_SERVER:
@@ -38,7 +38,6 @@ public class ServerStartUp : MonoBehaviour
             default:
                 break;
         }
-
     }
 
     private void OnDisable()
@@ -51,11 +50,9 @@ public class ServerStartUp : MonoBehaviour
 
     public void StartLocalServer()
     {
-        if (Room.Config.buildType == BuildType.LOCAL_SERVER)
-        {
-            Room.StartServer();
-        }
+        Room.StartServer();
     }
+
 
     public void StartRemoteServer()
     {
@@ -97,8 +94,6 @@ public class ServerStartUp : MonoBehaviour
         ConnectedPlayer player = _connectedPlayers.Find(x => x.PlayerId.Equals(playfabId, StringComparison.OrdinalIgnoreCase));
         _connectedPlayers.Remove(player);
         PlayFabMultiplayerAgentAPI.UpdateConnectedPlayers(_connectedPlayers);
-
-        CheckPlayerCountToShutdown();
     }
 
     private void OnPlayerAdded(string playfabId)
@@ -127,14 +122,6 @@ public class ServerStartUp : MonoBehaviour
     private void OnShutdown()
     {
         StartShutdownProcess();
-    }
-
-    private void CheckPlayerCountToShutdown()
-    {
-        if (_connectedPlayers.Count <= 0)
-        {
-            StartShutdownProcess();
-        }
     }
 
     private void StartShutdownProcess()
