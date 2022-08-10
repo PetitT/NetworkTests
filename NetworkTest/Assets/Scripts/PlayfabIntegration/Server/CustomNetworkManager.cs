@@ -58,6 +58,12 @@ public class CustomNetworkManager : NetworkManager
 
     public override void OnServerConnect(NetworkConnectionToClient conn)
     {
+        if (Config.buildType == BuildType.LOCAL_SERVER)
+        {
+            base.OnServerConnect(conn);
+            return;
+        }
+
         var uconn = Connections.Find(c => c.ConnectionId == conn.connectionId);
         if (uconn == null)
         {
@@ -68,10 +74,17 @@ public class CustomNetworkManager : NetworkManager
                 LobbyId = PlayFabMultiplayerAgentAPI.SessionConfig.SessionId
             });
         }
+
     }
 
     public override void OnServerDisconnect(NetworkConnectionToClient conn)
     {
+        if(Config.buildType == BuildType.LOCAL_SERVER)
+        {
+            base.OnServerDisconnect(conn);
+            return;
+        }
+
         var uconn = Connections.Find(c => c.ConnectionId == conn.connectionId);
         if (uconn != null)
         {
@@ -82,4 +95,12 @@ public class CustomNetworkManager : NetworkManager
             Connections.Remove(uconn);
         }
     }
+
+    public void ConnectToServer(string networkAddress, ushort port)
+    {
+        this.networkAddress = networkAddress;
+        Transport.port = port;
+        StartClient();
+    }
+
 }

@@ -9,7 +9,7 @@ namespace PlayFabIntegration
 {
     public class MatchmakingManager
     {
-        private PlayFabManager playFabManager;
+        private PlayFabManager playFabManager => PlayFabManager.Instance;
 
         private string currentQueueName;
         private string ticketID;
@@ -20,11 +20,6 @@ namespace PlayFabIntegration
         private const string entityType = "title_player_account";
 
         public string Status { get; private set; }
-
-        public MatchmakingManager(PlayFabManager playFabManager)
-        {
-            this.playFabManager = playFabManager;
-        }
 
         public void Tick(float deltaTime)
         {
@@ -144,10 +139,8 @@ namespace PlayFabIntegration
             Debug.Log($"Server details : {result.ServerDetails.IPV4Address} - {result.ServerDetails.Ports[0].Num}");
 
             //TODO CLEAN THIS 
-            CustomNetworkManager manager = GameObject.FindObjectOfType<CustomNetworkManager>();
-            manager.networkAddress = result.ServerDetails.IPV4Address;
-            manager.Transport.port = (ushort)result.ServerDetails.Ports[0].Num;
-            manager.StartClient();
+            CustomNetworkManager manager = NetworkManager.singleton as CustomNetworkManager;
+            manager.ConnectToServer(result.ServerDetails.IPV4Address, (ushort)result.ServerDetails.Ports[0].Num);
         }
 
         #endregion

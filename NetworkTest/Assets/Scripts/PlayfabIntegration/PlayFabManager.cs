@@ -22,7 +22,6 @@ namespace PlayFabIntegration
             }
         }
 
-
         public bool IsLoggedIn => LoginManager.IsLoggedIn;
         public string DisplayName => LoginManager.DisplayName;
         public string PlayfabID => LoginManager.LoggedInPlayFabID;
@@ -33,12 +32,8 @@ namespace PlayFabIntegration
         public LeaderboardManager LeaderboardManager { get; private set; } = new LeaderboardManager();
         public PlayerDataManager PlayerDataManager { get; private set; } = new PlayerDataManager();
         public TitleDataManager TitleDataManager { get; private set; } = new TitleDataManager();
-        public MatchmakingManager MatchmakingManager { get; private set; }
-
-        private void Awake()
-        {
-            MatchmakingManager = new MatchmakingManager(this);
-        }
+        public MatchmakingManager MatchmakingManager { get; private set; } = new MatchmakingManager();
+        public ServerConnectionManager ServerConnectionManager { get; private set; } = new ServerConnectionManager();
 
         private void Update()
         {

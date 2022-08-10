@@ -2,19 +2,20 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Configuration : MonoBehaviour
+[CreateAssetMenu(fileName = "Configuration", menuName = "PlayFab/Configuration")]
+public class Configuration : ScriptableObject
 {
 	public BuildType buildType;
 	public string buildId = "";
 	public string ipAddress = "";
 	public ushort port = 0;
 	public bool playFabDebugging = false;
+	public List<string> preferredRegions = new List<string>();
 }
 
 public enum BuildType
 {
-	LOCAL_CLIENT,
-	REMOTE_CLIENT,
+	CLIENT,
 	LOCAL_SERVER,
 	REMOTE_SERVER
 }

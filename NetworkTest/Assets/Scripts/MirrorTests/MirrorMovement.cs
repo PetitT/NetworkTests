@@ -15,11 +15,10 @@ public class MirrorMovement : NetworkBehaviour
 
     private void Update()
     {
-        if (active)
+        if (active && !isServer)
             Move();
     }
 
-    [Client]
     private void Move()
     {
         float X = Input.GetAxisRaw("Horizontal");
