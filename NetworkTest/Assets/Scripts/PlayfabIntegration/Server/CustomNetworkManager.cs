@@ -78,7 +78,7 @@ public class CustomNetworkManager : NetworkManager
     public override void OnServerDisconnect(NetworkConnectionToClient conn)
     {
         base.OnServerDisconnect(conn);
-
+             
         var uconn = Connections.Find(c => c.ConnectionId == conn.connectionId);
         if (uconn != null)
         {
@@ -104,7 +104,7 @@ public class CustomNetworkManager : NetworkManager
 
     public IEnumerator ShutDown()
     {
-        for (int i = 3; i > 0; i++)
+        for (int i = 3; i > 0; i--)
         {
             Debug.Log($"Server shutting down in {i}");
             yield return new WaitForSeconds(1f);
