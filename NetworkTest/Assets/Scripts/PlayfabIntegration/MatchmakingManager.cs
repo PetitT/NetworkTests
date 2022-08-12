@@ -4,6 +4,7 @@ using UnityEngine;
 using PlayFab;
 using PlayFab.MultiplayerModels;
 using Mirror;
+using System;
 
 namespace PlayFabIntegration
 {
@@ -20,6 +21,7 @@ namespace PlayFabIntegration
         private const string entityType = "title_player_account";
 
         public string Status { get; private set; }
+        public GetMatchResult MatchResult { get; private set; }
 
         public void Tick(float deltaTime)
         {
@@ -99,7 +101,6 @@ namespace PlayFabIntegration
         private void OnGetMatchmakingTicket(GetMatchmakingTicketResult result)
         {
             Status = $"Status: {result.Status}";
-
             switch (result.Status)
             {
                 case "Matched":
@@ -116,14 +117,14 @@ namespace PlayFabIntegration
             }
         }
 
-        private void StartMatch(string matchId)
+        private void StartMatch(string matchID)
         {
             Status = $"Starting Match";
 
             PlayFabMultiplayerAPI.GetMatch(
                 new GetMatchRequest
                 {
-                    MatchId = matchId,
+                    MatchId = matchID,
                     QueueName = currentQueueName
                 },
 
@@ -134,8 +135,8 @@ namespace PlayFabIntegration
 
         private void OnGetMatch(GetMatchResult result)
         {
-            Status = $"{result.Members[0].Entity.Id} vs {result.Members[1].Entity.Id}";
-
+            Status = "Found match";
+            MatchResult = result;
             Debug.Log($"Server details : {result.ServerDetails.IPV4Address} - {result.ServerDetails.Ports[0].Num}");
 
             //TODO CLEAN THIS 

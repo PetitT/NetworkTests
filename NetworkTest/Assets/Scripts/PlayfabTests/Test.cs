@@ -202,7 +202,7 @@ public class Test : MonoBehaviour
 
         if (GUI.Button(
             new Rect(0, 50, 100, 50),
-            "Find match"
+            "QuickMatch"
             ))
         {
             playFabManager.MatchmakingManager.StartMatchmaking(
@@ -222,9 +222,31 @@ public class Test : MonoBehaviour
                 }
                 );
         }
+        if (GUI.Button(
+            new Rect(100, 50, 100, 50),
+            "2vs2"
+            ))
+        {
+            playFabManager.MatchmakingManager.StartMatchmaking(
+                "2vs2",
+                maxMatchmakingTime,
+                new
+                {
+                    elo = testElo,
+                    latencies = new object[]
+                    {
+                        new
+                        {
+                            region = "NorthEurope",
+                            latency = 100
+                        }
+                    }
+                }
+                );
+        }
 
         if (GUI.Button(
-            new Rect(0, 100, 100, 50),
+            new Rect(0, 150, 100, 50),
             "Add elo"
             ))
         {
@@ -232,7 +254,7 @@ public class Test : MonoBehaviour
         }
 
         if (GUI.Button(
-            new Rect(100, 50, 175, 50),
+            new Rect(0, 100, 175, 50),
             "Cancel all matchmaking"
             ))
         {
@@ -241,8 +263,8 @@ public class Test : MonoBehaviour
 
         string displayName = playFabManager.IsLoggedIn ? $"Logged in as -{playFabManager.DisplayName}-" : "Not connected";
         GUI.Label(new Rect(210, 15, 200, 50), displayName);
-        GUI.Label(new Rect(280, 65, 200, 50), playFabManager.MatchmakingManager.Status);
-        GUI.Label(new Rect(110, 115, 200, 50), $"Elo : {testElo}");
+        GUI.Label(new Rect(210, 65, 200, 50), playFabManager.MatchmakingManager.Status);
+        GUI.Label(new Rect(110, 165, 200, 50), $"Elo : {testElo}");
     }
 }
 
