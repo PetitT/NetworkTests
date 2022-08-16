@@ -17,7 +17,7 @@ public class PlayerDisplay : NetworkBehaviour
 
     private void DisplayName(string oldValue, string newValue)
     {
-        Debug.Log($"Updated name from -{oldValue}- to -{newValue}-");
+        //Debug.Log($"Updated name from -{oldValue}- to -{newValue}-");
         if (text == null)
         {
             text = GetComponentInChildren<TMP_Text>();
@@ -27,7 +27,7 @@ public class PlayerDisplay : NetworkBehaviour
 
     private void DisplayColor(string oldValue, string newValue)
     {
-        Debug.Log($"Updated color from -{oldValue}- to -{newValue}-");
+        //Debug.Log($"Updated color from -{oldValue}- to -{newValue}-");
         if (string.IsNullOrEmpty(newValue)) { return; }
 
         if (bodyMesh == null)
@@ -52,10 +52,10 @@ public class PlayerDisplay : NetworkBehaviour
         }
         catch
         {
-            Debug.Log("Player was not part of a team");
+            //Debug.Log("Player was not part of a team");
         }
 
-        Debug.Log($"My name is {displayName} and my teamId is {teamId}");
+        //Debug.Log($"My name is {displayName} and my teamId is {teamId}");
         CmdSetDatas(displayName, teamId);
     }
 

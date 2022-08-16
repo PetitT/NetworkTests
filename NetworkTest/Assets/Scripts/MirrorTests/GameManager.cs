@@ -32,13 +32,6 @@ public class GameManager : NetworkBehaviour
     private void SpawnBall()
     {
         newBall = Instantiate(ballPrefab, Vector3.zero, Quaternion.Euler(0, 90, 0));
-        newBall.GetComponent<BallMovement>().Initialize(NetworkTime.time);
-        StartCoroutine(Spawn());
-    }
-
-    private IEnumerator Spawn()
-    {
-        yield return new WaitForSeconds(1);
         NetworkServer.Spawn(newBall);
     }
 

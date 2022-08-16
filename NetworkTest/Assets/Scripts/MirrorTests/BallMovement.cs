@@ -1,45 +1,79 @@
 using Mirror;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class BallMovement : NetworkBehaviour
 {
-    [SyncVar] double spawnTime;
-    Vector3 direction = Vector3.forward;
-    float speed = 3;
+    [SyncVar(hook = nameof(SyncSpawnTime))] double spawnTime;
+    Vector3 direction;
+    float speed = 1;
 
-    public void Initialize(double time)
+    Vector3 targetPosition;
+    float lerpSpeed = 10;
+
+    public override void OnStartServer()
     {
-        spawnTime = time;
+        spawnTime = NetworkTime.time;
     }
 
     private void Start()
     {
+        direction = transform.forward;
+    }
+
+    private void SyncSpawnTime(double oldTime, double newTime)
+    {
+        spawnTime = newTime;
+        direction = transform.forward;
         if (!isServer)
         {
-            // double delta = NetworkTime.time - spawnTime;
-            // Vector3 deltaMovement = speed * (float)delta * Vector3.forward;
-            // transform.position += deltaMovement;
+            Reconcile(spawnTime, Vector3.zero);
         }
+    }
+
+    private void Reconcile(double reconcileTime, Vector3 initialPosition)
+    {
+        double delta = NetworkTime.time - reconcileTime;
+        Vector3 deltaMovement = speed * (float)delta * direction;
+        targetPosition = initialPosition + deltaMovement;
     }
 
     private void Update()
     {
-        transform.Translate(direction * speed * Time.deltaTime);
-        if (direction == Vector3.forward)
+        UpdateTargetPosition();
+        MoveToTargetPosition();
+    }
+
+    private void UpdateTargetPosition()
+    {
+        targetPosition += direction * speed * Time.deltaTime;
+        //if (direction == transform.forward)
+        //{
+        //    if (transform.position.x > 5)
+        //    {
+        //        Revert();
+        //    }
+        //}
+        //else
+        //{
+        //    if (transform.position.x < -5)
+        //    {
+        //        Revert();
+        //    }
+        //}
+    }
+
+    private void MoveToTargetPosition()
+    {
+        if (isServer)
         {
-            if (transform.position.x > 5)
-            {
-                Revert();
-            }
+            transform.position = targetPosition;
         }
         else
         {
-            if (transform.position.x < -5)
-            {
-                Revert();
-            }
+            transform.position = Vector3.Lerp(transform.position, targetPosition, lerpSpeed * Time.deltaTime);
         }
     }
 
@@ -49,16 +83,17 @@ public class BallMovement : NetworkBehaviour
         direction = -direction;
     }
 
-    [Server]
-    public void ServerRevert(double networkTime)
+
+    public void HitBall(BallHitInfo hitInfo)
     {
-        RevertOnClients();
         Revert();
+        Reconcile(hitInfo.networkTime, hitInfo.hitPosition);
     }
 
-    [ClientRpc]
-    private void RevertOnClients()
+    private void OnGUI()
     {
-        Revert();
+        GUI.Label(new Rect(300, 300, 50, 50), spawnTime.ToString());
     }
+
+
 }
