@@ -27,6 +27,8 @@ public class Test : MonoBehaviour
     [HideInInspector] public string matchmakingQueue;
     [HideInInspector] public int maxMatchmakingTime;
 
+    [HideInInspector] public string lobbyString;
+
     private void Awake()
     {
         playFabManager = GetComponent<PlayFabManager>();
@@ -183,6 +185,76 @@ public class Test : MonoBehaviour
         }
     }
 
+    private void Join1v1Matchmaking()
+    {
+        playFabManager.MatchmakingManager.StartMatchmaking(
+                matchmakingQueue,
+                maxMatchmakingTime,
+                new
+                {
+                    elo = testElo,
+                    latencies = new object[]
+                    {
+                        new
+                        {
+                            region = "NorthEurope",
+                            latency = 100
+                        }
+                    }
+                }
+                );
+    }
+
+    private void Join2v2Matchmaking()
+    {
+        playFabManager.MatchmakingManager.StartMatchmaking(
+                "2vs2",
+                maxMatchmakingTime,
+                new
+                {
+                    elo = testElo,
+                    latencies = new object[]
+                    {
+                        new
+                        {
+                            region = "NorthEurope",
+                            latency = 100
+                        }
+                    }
+                }
+                );
+    }
+
+    public void CreateLobby()
+    {
+        playFabManager.LobbyManager.CreateLobby(OnLobbyCreated);
+    }
+
+    private void OnLobbyCreated(string arrangementString)
+    {
+        Debug.Log($"Arrangement string of created lobby is is {arrangementString}");
+    }
+
+    public void JoinLobby()
+    {
+        playFabManager.LobbyManager.JoinLobby(lobbyString);
+    }
+
+    public void FindLobbies()
+    {
+        playFabManager.LobbyManager.FindLobbies();
+    }
+
+    public void DeleteAllLobbies()
+    {
+        playFabManager.LobbyManager.DeleteAllLobbies();
+    }
+
+    public void LeaveCurrentLobby()
+    {
+        playFabManager.LobbyManager.LeaveCurrentLobby();
+    }
+
     private void OnGUI()
     {
         if (GUI.Button(
@@ -200,49 +272,22 @@ public class Test : MonoBehaviour
             LoginWithDeviceID();
         }
 
+        //if(GUI.Button(new Rect(200,0,100,50), "Server Login")) { playFabManager.LoginManager.LoginAsServer(); }
+
         if (GUI.Button(
             new Rect(0, 50, 100, 50),
             "QuickMatch"
             ))
         {
-            playFabManager.MatchmakingManager.StartMatchmaking(
-                matchmakingQueue,
-                maxMatchmakingTime,
-                new
-                {
-                    elo = testElo,
-                    latencies = new object[]
-                    {
-                        new
-                        {
-                            region = "NorthEurope",
-                            latency = 100
-                        }
-                    }
-                }
-                );
+            Join1v1Matchmaking();
         }
+
         if (GUI.Button(
             new Rect(100, 50, 100, 50),
             "2vs2"
             ))
         {
-            playFabManager.MatchmakingManager.StartMatchmaking(
-                "2vs2",
-                maxMatchmakingTime,
-                new
-                {
-                    elo = testElo,
-                    latencies = new object[]
-                    {
-                        new
-                        {
-                            region = "NorthEurope",
-                            latency = 100
-                        }
-                    }
-                }
-                );
+            Join2v2Matchmaking();
         }
 
         if (GUI.Button(
@@ -265,6 +310,45 @@ public class Test : MonoBehaviour
         GUI.Label(new Rect(210, 15, 200, 50), displayName);
         GUI.Label(new Rect(210, 65, 200, 50), playFabManager.MatchmakingManager.Status);
         GUI.Label(new Rect(110, 165, 200, 50), $"Elo : {testElo}");
+
+
+        if (GUI.Button(
+            new Rect(350, 0, 100, 50),
+            "Create Lobby"))
+        {
+            CreateLobby();
+        }
+
+        if (GUI.Button(
+            new Rect(350, 50, 100, 50),
+            "Join Lobby"))
+        {
+            JoinLobby();
+        }
+        lobbyString = GUI.TextField(new Rect(350, 100, 100, 25), lobbyString);
+
+        if(GUI.Button(
+            new Rect(350,125,100,50),
+            "Find Lobbies"))
+        {
+            FindLobbies();
+        }
+
+        if(GUI.Button(
+            new Rect(350,175,125,50),
+            "Leave current lobby"))
+        {
+            LeaveCurrentLobby();
+        }
+
+        if(GUI.Button(
+            new Rect(350,225,125,50),
+            "Delete all lobbies"))
+        {
+            DeleteAllLobbies();
+        }
+
+
     }
 }
 

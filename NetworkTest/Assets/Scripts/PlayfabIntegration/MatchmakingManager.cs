@@ -138,7 +138,6 @@ namespace PlayFabIntegration
             Status = "Found match";
             MatchResult = result;
             Debug.Log($"Server details : {result.ServerDetails.IPV4Address} - {result.ServerDetails.Ports[0].Num}");
-
             //TODO CLEAN THIS 
             CustomNetworkManager manager = NetworkManager.singleton as CustomNetworkManager;
             manager.ConnectToServer(result.ServerDetails.IPV4Address, (ushort)result.ServerDetails.Ports[0].Num);

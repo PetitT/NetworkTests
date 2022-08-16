@@ -1,6 +1,7 @@
 using Mirror;
 using PlayFab;
 using PlayFab.MultiplayerModels;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -14,7 +15,7 @@ public class ServerConnectionManager
 
     public void RequestMultiplayerServer()
     {
-        if(networkManager == null)
+        if (networkManager == null)
         {
             Debug.Log("No custom network manager found");
             return;

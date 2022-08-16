@@ -1,3 +1,4 @@
+using PlayFab.ClientModels;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -26,6 +27,7 @@ namespace PlayFabIntegration
         public string DisplayName => LoginManager.DisplayName;
         public string PlayfabID => LoginManager.LoggedInPlayFabID;
         public string EntityID => LoginManager.EntityID;
+        public EntityKey EntityKey => LoginManager.EntityKey;
         public string SessionTicket => LoginManager.SessionTicket;
 
         public LoginManager LoginManager { get; private set; } = new LoginManager();
@@ -34,6 +36,7 @@ namespace PlayFabIntegration
         public TitleDataManager TitleDataManager { get; private set; } = new TitleDataManager();
         public MatchmakingManager MatchmakingManager { get; private set; } = new MatchmakingManager();
         public ServerConnectionManager ServerConnectionManager { get; private set; } = new ServerConnectionManager();
+        public LobbyManager LobbyManager { get; private set; } = new LobbyManager();
 
         private void Update()
         {
@@ -48,6 +51,7 @@ namespace PlayFabIntegration
             if (IsLoggedIn)
             {
                 MatchmakingManager.CancelAllMatchmakingQueuesForUser(); //We need to manually cancel matchmaking because we are still in queue after disconnecting
+                LobbyManager.LeaveCurrentLobby();
             }
         }
     }

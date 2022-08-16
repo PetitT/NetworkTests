@@ -10,7 +10,7 @@ namespace PlayFabIntegration
     /// <summary>
     /// The login manager allows one to connect to a playfab account and to set their display name
     /// </summary>
-    public class LoginManager 
+    public class LoginManager
     {
         public event Action<LoginResult> onSuccessfulLogIn;
         public event Action onFailedToLogIn;
@@ -21,10 +21,11 @@ namespace PlayFabIntegration
         public string LoggedInPlayFabID { get; private set; }
         public string EntityID { get; private set; }
         public string SessionTicket { get; private set; }
+        public EntityKey EntityKey { get; private set; }
 
         public enum LoginMethod { DeviceID, Random }
 
-        #region LOGIN
+        #region CLIENT LOGIN
         /// <summary>
         /// Logs the player to an account. 
         /// </summary>
@@ -55,10 +56,10 @@ namespace PlayFabIntegration
             LoginWithCustomIDRequest request = new LoginWithCustomIDRequest
             {
                 CustomId = ID,
-                CreateAccount = true, 
+                CreateAccount = true,
                 InfoRequestParameters = new GetPlayerCombinedInfoRequestParams
                 {
-                    GetPlayerProfile = true
+                    GetPlayerProfile = true                    
                 }
             };
 
@@ -68,6 +69,7 @@ namespace PlayFabIntegration
         private void OnLoggedIn(LoginResult result)
         {
             Debug.Log("Successful login!");
+            EntityKey = result.EntityToken.Entity;            
             IsLoggedIn = true;
             LoggedInPlayFabID = result.PlayFabId;
             SessionTicket = result.SessionTicket;
@@ -92,6 +94,31 @@ namespace PlayFabIntegration
         }
 
         #endregion
+
+        #region SERVER LOGIN
+        public void LoginAsServer()
+        {
+            PlayFabServerAPI.LoginWithServerCustomId(
+                new PlayFab.ServerModels.LoginWithServerCustomIdRequest
+                {
+                    ServerCustomId = SystemInfo.deviceUniqueIdentifier                   
+                },
+                OnServerLogin,
+                OnServerFailedLogin                
+                );
+        }
+
+        private void OnServerLogin(PlayFab.ServerModels.ServerLoginResult result)
+        {
+            Debug.Log("Logged in as server");
+        }
+
+        private void OnServerFailedLogin(PlayFabError error)
+        {
+            Debug.Log($"Couldn't login as server : {error.GenerateErrorReport()}");
+        }
+        #endregion
+
 
         #region DISPLAY NAME
         public void UpdateDisplayName(string newName)
