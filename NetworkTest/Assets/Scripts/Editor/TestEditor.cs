@@ -119,5 +119,19 @@ public class TestEditor : Editor
         test.matchmakingQueue = EditorGUILayout.TextField("Queue name", test.matchmakingQueue);
         test.maxMatchmakingTime = EditorGUILayout.IntField("Max Matchmaking time", test.maxMatchmakingTime);
 
+        GUILayout.Space(10);
+        GUILayout.Label("---LOBBIES---");
+        test.lobbyID = EditorGUILayout.TextField("Lobby ID", test.lobbyID);
+        test.lobbyName = EditorGUILayout.TextField("Lobby Name", test.lobbyName);
+        test.lobbyArrangementString = EditorGUILayout.TextField("Lobby Arrangement String", test.lobbyArrangementString);
+        if(GUILayout.Button("Set Lobby Name"))
+        {
+            test.SetLobbyName();
+        }
+        if(GUILayout.Button("Get Lobby Name"))
+        {
+            test.GetLobby();
+        }
+
     }
 }

@@ -10,7 +10,9 @@ namespace PlayFabIntegration
 {
     public class LobbyManager
     {
-        public event Action<string> onLobbyCreated;
+        public event Action<CreateLobbyResult> onLobbyCreated;
+        public event Action<JoinLobbyResult> onJoinedLobby;
+        private event Action<GetLobbyResult> onGetLobby;
         public bool IsInALobby => !string.IsNullOrEmpty(currentLobbyID);
 
         private string currentLobbyID;
@@ -31,7 +33,7 @@ namespace PlayFabIntegration
             return entityKey;
         }
 
-        public void CreateLobby(Action<string> OnLobbyCreated)
+        public void CreateLobby()
         {
             if (IsInALobby)
             {
@@ -39,7 +41,6 @@ namespace PlayFabIntegration
                 return;
             }
 
-            OnLobbyCreated = onLobbyCreated;
             Debug.Log("Creating lobby");
 
             PlayFabMultiplayerAPI.CreateLobby(
@@ -56,8 +57,8 @@ namespace PlayFabIntegration
 
         private void OnCreatedLobby(CreateLobbyResult result)
         {
-            Debug.Log($"Created lobby : {result.LobbyId}");
-            onLobbyCreated?.Invoke(result.ConnectionString);
+            Debug.Log($"Created lobby : ID = {result.LobbyId}");
+            onLobbyCreated?.Invoke(result);
             currentLobbyID = result.LobbyId;
         }
 
@@ -73,7 +74,8 @@ namespace PlayFabIntegration
             PlayFabMultiplayerAPI.JoinLobby(
                 new JoinLobbyRequest
                 {
-                    ConnectionString = connectionString
+                    MemberEntity = GetMultiplayerEntityKey(),
+                    ConnectionString = connectionString                    
                 },
                 OnJoinedLobby,
                 OnFailedToJoinLobby
@@ -84,6 +86,7 @@ namespace PlayFabIntegration
         {
             Debug.Log($"Joined Lobby : ID is {result.LobbyId}");
             currentLobbyID = result.LobbyId;
+            onJoinedLobby?.Invoke(result);
         }
 
         public void LeaveCurrentLobby()
@@ -93,13 +96,17 @@ namespace PlayFabIntegration
                 Debug.Log("Currently not in a lobby");
                 return;
             }
+            LeaveLobby(currentLobbyID);
+        }
 
+        public void LeaveLobby(string lobbyID)
+        {
             Debug.Log("Attempt to leave current lobby");
 
             PlayFabMultiplayerAPI.LeaveLobby(
                 new LeaveLobbyRequest
                 {
-                    LobbyId = currentLobbyID,
+                    LobbyId = lobbyID,
                     MemberEntity = GetMultiplayerEntityKey()
                 },
                 OnLeftLobby,
@@ -123,16 +130,77 @@ namespace PlayFabIntegration
                 OnFailedToFindLobbies
                 );
         }
+
         private void OnFindLobbies(FindLobbiesResult result)
         {
             Debug.Log($"Found {result.Lobbies.Count} {(result.Lobbies.Count > 1 ? "lobbies" : "lobby")}");
             for (int i = 0; i < result.Lobbies.Count; i++)
             {
                 LobbySummary lobbySummary = result.Lobbies[i];
-                Debug.Log($"Lobby {i} : {lobbySummary.CurrentPlayers} player{(lobbySummary.CurrentPlayers > 1 ? "s" : "")}");
+                Debug.Log($"-{i}- | {lobbySummary.CurrentPlayers} player{(lobbySummary.CurrentPlayers > 1 ? "s" : "")} \n Code : {lobbySummary.ConnectionString} \n ID : {lobbySummary.LobbyId} ");
             }
         }
 
+        public void JoinArrangedLobby(string arrangementString)
+        {
+            Debug.Log($"Trying to join arranged lobby with code : {arrangementString}");
+            PlayFabMultiplayerAPI.JoinArrangedLobby(
+                new JoinArrangedLobbyRequest
+                {
+                    ArrangementString = arrangementString
+                },
+                OnJoinArrangedLobby,
+                OnFailedToJoinArrangedLobby
+                );
+        }
+
+        private void OnJoinArrangedLobby(JoinLobbyResult result)
+        {
+            Debug.Log($"Joined arranged lobby : {result.LobbyId}");
+        }
+
+        public void SetLobbyName(string lobbyID, string name)
+        {
+            Debug.Log("Attempt to set lobby name");
+            PlayFabMultiplayerAPI.UpdateLobby(
+                new UpdateLobbyRequest
+                {
+                    MemberEntity = GetMultiplayerEntityKey(),
+                    LobbyData = new Dictionary<string, string> { { "name", name } },
+                    LobbyId = lobbyID
+                },
+                OnSetLobbyName,
+                OnFailedToSetLobbyName
+                );
+        }
+
+        private void OnSetLobbyName(LobbyEmptyResult result)
+        {
+            Debug.Log($"Set lobby name");
+        }
+
+        public void GetLobby(string lobbyID, Action<GetLobbyResult> onGotLobby)
+        {
+            Debug.Log("Attempt to get lobby");
+            onGetLobby = onGotLobby;
+            PlayFabMultiplayerAPI.GetLobby(
+                new GetLobbyRequest
+                {
+                    LobbyId = lobbyID
+                },
+                OnGetLobby,
+                OnFailedToGetLobby
+                );
+        }
+
+        private void OnGetLobby(GetLobbyResult result)
+        {
+            Debug.Log($"Found lobby");
+            onGetLobby?.Invoke(result);
+        }
+
+        #region DELETE LOBBIES
+        // Does not work, needs a "server" entity...
         public void DeleteLobby(string lobbyID)
         {
             Debug.Log($"Attempt to delete lobby {lobbyID}");
@@ -156,24 +224,6 @@ namespace PlayFabIntegration
             Debug.Log($"Deleted lobby");
         }
 
-        public void JoinArrangedLobby(string arrangementString)
-        {
-            Debug.Log($"Trying to join arranged lobby with code : {arrangementString}");
-            PlayFabMultiplayerAPI.JoinArrangedLobby(
-                new JoinArrangedLobbyRequest
-                {
-                    ArrangementString = arrangementString
-                },
-                OnJoinArrangedLobby,
-                OnFailedToJoinArrangedLobby
-                );
-        }
-
-        private void OnJoinArrangedLobby(JoinLobbyResult result)
-        {
-            Debug.Log($"Joined arranged lobby : {result.LobbyId}");
-        }
-
         public void DeleteAllLobbies()
         {
             Debug.Log("Attempt to find lobbies");
@@ -183,6 +233,7 @@ namespace PlayFabIntegration
                 OnFailedToFindLobbies
                 );
         }
+        #endregion
 
         #region ERRORS
         private void OnFailedToCreateLobby(PlayFabError error)
@@ -213,6 +264,16 @@ namespace PlayFabIntegration
         private void OnFailedToDeleteLobby(PlayFabError error)
         {
             Debug.Log($"Couldn't delete lobby : {error.GenerateErrorReport()}");
+        }
+
+        private void OnFailedToSetLobbyName(PlayFabError error)
+        {
+            Debug.Log($"Couldn't set lobby name : {error.GenerateErrorReport()}");
+        }
+
+        private void OnFailedToGetLobby(PlayFabError error)
+        {
+            Debug.Log($"Failed to get lobby : {error.GenerateErrorReport()}");
         }
         #endregion
     }

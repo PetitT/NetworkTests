@@ -1,4 +1,5 @@
 using PlayFab.ClientModels;
+using PlayFab.MultiplayerModels;
 using PlayFabIntegration;
 using System;
 using System.Collections;
@@ -27,11 +28,15 @@ public class Test : MonoBehaviour
     [HideInInspector] public string matchmakingQueue;
     [HideInInspector] public int maxMatchmakingTime;
 
-    [HideInInspector] public string lobbyString;
+    [HideInInspector] public string lobbyArrangementString;
+    [HideInInspector] public string lobbyID;
+    [HideInInspector] public string lobbyName;
 
     private void Awake()
     {
         playFabManager = GetComponent<PlayFabManager>();
+        playFabManager.LobbyManager.onJoinedLobby += LobbyManager_onJoinedLobby;
+        playFabManager.LobbyManager.onLobbyCreated += LobbyManager_onLobbyCreated;
     }
 
     private void Start()
@@ -227,17 +232,24 @@ public class Test : MonoBehaviour
 
     public void CreateLobby()
     {
-        playFabManager.LobbyManager.CreateLobby(OnLobbyCreated);
+        playFabManager.LobbyManager.CreateLobby();
     }
 
-    private void OnLobbyCreated(string arrangementString)
+    private void LobbyManager_onLobbyCreated(CreateLobbyResult obj)
     {
-        Debug.Log($"Arrangement string of created lobby is is {arrangementString}");
+        lobbyID = obj.LobbyId;
+        lobbyArrangementString = obj.ConnectionString;
     }
 
     public void JoinLobby()
     {
-        playFabManager.LobbyManager.JoinLobby(lobbyString);
+        playFabManager.LobbyManager.JoinLobby(lobbyArrangementString);
+    }
+
+    private void LobbyManager_onJoinedLobby(PlayFab.MultiplayerModels.JoinLobbyResult result)
+    {
+        lobbyID = result.LobbyId;
+        GetLobby();
     }
 
     public void FindLobbies()
@@ -252,103 +264,49 @@ public class Test : MonoBehaviour
 
     public void LeaveCurrentLobby()
     {
-        playFabManager.LobbyManager.LeaveCurrentLobby();
+        playFabManager.LobbyManager.LeaveLobby(lobbyID);
+    }
+
+    public void SetLobbyName()
+    {
+        playFabManager.LobbyManager.SetLobbyName(lobbyID, lobbyName);
+    }
+
+    public void GetLobby()
+    {
+        playFabManager.LobbyManager.GetLobby(lobbyID, OnGotLobby);
+    }
+
+    private void OnGotLobby(GetLobbyResult result)
+    {        
+        if (result.Lobby.LobbyData.ContainsKey("name"))
+        {
+            lobbyName = result.Lobby.LobbyData["name"];
+        }
     }
 
     private void OnGUI()
     {
-        if (GUI.Button(
-            new Rect(0, 0, 100, 50),
-            "Random Login"
-            ))
-        {
-            CreateNewRandomAccount();
-        }
-        if (GUI.Button(
-            new Rect(100, 0, 100, 50),
-            "Device Login"
-            ))
-        {
-            LoginWithDeviceID();
-        }
-
-        //if(GUI.Button(new Rect(200,0,100,50), "Server Login")) { playFabManager.LoginManager.LoginAsServer(); }
-
-        if (GUI.Button(
-            new Rect(0, 50, 100, 50),
-            "QuickMatch"
-            ))
-        {
-            Join1v1Matchmaking();
-        }
-
-        if (GUI.Button(
-            new Rect(100, 50, 100, 50),
-            "2vs2"
-            ))
-        {
-            Join2v2Matchmaking();
-        }
-
-        if (GUI.Button(
-            new Rect(0, 150, 100, 50),
-            "Add elo"
-            ))
-        {
-            testElo++;
-        }
-
-        if (GUI.Button(
-            new Rect(0, 100, 175, 50),
-            "Cancel all matchmaking"
-            ))
-        {
-            playFabManager.MatchmakingManager.CancelAllMatchmakingQueuesForUser();
-        }
+        if (GUI.Button(new Rect(0, 0, 100, 50), "Random Login")) { CreateNewRandomAccount(); }
+        if (GUI.Button(new Rect(100, 0, 100, 50), "Device Login")) { LoginWithDeviceID(); }
+        if (GUI.Button(new Rect(0, 50, 100, 50), "QuickMatch")) { Join1v1Matchmaking(); }
+        if (GUI.Button(new Rect(100, 50, 100, 50), "2vs2")) { Join2v2Matchmaking(); }
+        if (GUI.Button(new Rect(0, 150, 100, 50), "Add elo")) { testElo++; }
+        if (GUI.Button(new Rect(0, 100, 175, 50), "Cancel all matchmaking")) { playFabManager.MatchmakingManager.CancelAllMatchmakingQueuesForUser(); }
 
         string displayName = playFabManager.IsLoggedIn ? $"Logged in as -{playFabManager.DisplayName}-" : "Not connected";
         GUI.Label(new Rect(210, 15, 200, 50), displayName);
         GUI.Label(new Rect(210, 65, 200, 50), playFabManager.MatchmakingManager.Status);
         GUI.Label(new Rect(110, 165, 200, 50), $"Elo : {testElo}");
 
-
-        if (GUI.Button(
-            new Rect(350, 0, 100, 50),
-            "Create Lobby"))
-        {
-            CreateLobby();
-        }
-
-        if (GUI.Button(
-            new Rect(350, 50, 100, 50),
-            "Join Lobby"))
-        {
-            JoinLobby();
-        }
-        lobbyString = GUI.TextField(new Rect(350, 100, 100, 25), lobbyString);
-
-        if(GUI.Button(
-            new Rect(350,125,100,50),
-            "Find Lobbies"))
-        {
-            FindLobbies();
-        }
-
-        if(GUI.Button(
-            new Rect(350,175,125,50),
-            "Leave current lobby"))
-        {
-            LeaveCurrentLobby();
-        }
-
-        if(GUI.Button(
-            new Rect(350,225,125,50),
-            "Delete all lobbies"))
-        {
-            DeleteAllLobbies();
-        }
-
-
+        if (GUI.Button(new Rect(Screen.width - 100, 0, 100, 50), "Create Lobby")) { CreateLobby(); }
+        if (GUI.Button(new Rect(Screen.width - 100, 50, 100, 50), "Join Lobby")) { JoinLobby(); }
+        if (GUI.Button(new Rect(Screen.width - 100, 100, 100, 50), "Leave lobby")) { LeaveCurrentLobby(); }
+        if (GUI.Button(new Rect(Screen.width - 100, 150, 100, 50), "Find Lobbies")) { FindLobbies(); }
+        if (GUI.Button(new Rect(Screen.width - 100, 200, 100, 50), "Set Lobby Name")) { SetLobbyName(); };
+        lobbyArrangementString = GUI.TextField(new Rect(Screen.width - 200, 0, 100, 25), lobbyArrangementString);
+        lobbyID = GUI.TextField(new Rect(Screen.width - 200, 25, 100, 25), lobbyID);
+        lobbyName = GUI.TextField(new Rect(Screen.width - 200, 50, 100, 25), lobbyName);
     }
 }
 

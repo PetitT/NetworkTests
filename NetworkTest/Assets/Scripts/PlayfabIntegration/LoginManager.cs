@@ -22,7 +22,6 @@ namespace PlayFabIntegration
         public string EntityID { get; private set; }
         public string SessionTicket { get; private set; }
         public EntityKey EntityKey { get; private set; }
-
         public enum LoginMethod { DeviceID, Random }
 
         #region CLIENT LOGIN
@@ -95,30 +94,29 @@ namespace PlayFabIntegration
 
         #endregion
 
-        #region SERVER LOGIN
-        public void LoginAsServer()
-        {
-            PlayFabServerAPI.LoginWithServerCustomId(
-                new PlayFab.ServerModels.LoginWithServerCustomIdRequest
-                {
-                    ServerCustomId = SystemInfo.deviceUniqueIdentifier                   
-                },
-                OnServerLogin,
-                OnServerFailedLogin                
-                );
-        }
+        //#region SERVER LOGIN
+        //public void LoginAsServer()
+        //{
+        //    PlayFabServerAPI.LoginWithServerCustomId(
+        //        new PlayFab.ServerModels.LoginWithServerCustomIdRequest
+        //        {
+        //            ServerCustomId = SystemInfo.deviceUniqueIdentifier                   
+        //        },
+        //        OnServerLogin,
+        //        OnServerFailedLogin                
+        //        );
+        //}
 
-        private void OnServerLogin(PlayFab.ServerModels.ServerLoginResult result)
-        {
-            Debug.Log("Logged in as server");
-        }
+        //private void OnServerLogin(PlayFab.ServerModels.ServerLoginResult result)
+        //{
+        //    Debug.Log("Logged in as server");
+        //}
 
-        private void OnServerFailedLogin(PlayFabError error)
-        {
-            Debug.Log($"Couldn't login as server : {error.GenerateErrorReport()}");
-        }
-        #endregion
-
+        //private void OnServerFailedLogin(PlayFabError error)
+        //{
+        //    Debug.Log($"Couldn't login as server : {error.GenerateErrorReport()}");
+        //}
+        //#endregion
 
         #region DISPLAY NAME
         public void UpdateDisplayName(string newName)
