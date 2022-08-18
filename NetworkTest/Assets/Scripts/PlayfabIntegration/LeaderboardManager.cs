@@ -29,19 +29,12 @@ namespace PlayFabIntegration
                 }
             };
 
-            PlayFabClientAPI.UpdatePlayerStatistics(request, OnUpdatedLeaderboard, OnFailedToUpdateLeaderboard);
+            PlayFabClientAPI.UpdatePlayerStatistics(
+                request,
+                (result) => PlayFabLogging.Log("Successfully updated leaderboard!"),
+                (error) => PlayFabLogging.LogError("Couldn't update leaderboard", error)
+                );
         }
-
-        private void OnUpdatedLeaderboard(UpdatePlayerStatisticsResult result)
-        {
-            Debug.Log("Successfully updated leaderboard!");
-        }
-
-        private void OnFailedToUpdateLeaderboard(PlayFabError error)
-        {
-            Debug.Log($"Couldn't update leaderboard : {error.GenerateErrorReport()}");
-        }
-
         #endregion
 
         #region Get Leaderboards
@@ -64,18 +57,21 @@ namespace PlayFabIntegration
                 StartPosition = startPosition
             };
 
-            PlayFabClientAPI.GetLeaderboard(request, OnGetLeaderboard, OnFailedToGetLeaderboard);
+            PlayFabClientAPI.GetLeaderboard(
+                request, 
+                OnGetLeaderboard, 
+                OnFailedToGetLeaderboard);
         }
 
         private void OnGetLeaderboard(GetLeaderboardResult result)
         {
-            Debug.Log("Succesfully got leaderboard");
+            PlayFabLogging.Log("Succesfully got leaderboard");
             onGetLeaderboardEvent?.Invoke(result.Leaderboard);
         }
 
         private void OnFailedToGetLeaderboard(PlayFabError error)
         {
-            Debug.Log($"Couldn't get leaderboard : {error.GenerateErrorReport()}");
+            PlayFabLogging.LogError("Couldn't get leaderboard", error);
             onGetLeaderboardEvent?.Invoke(null);
         }
 
@@ -95,18 +91,22 @@ namespace PlayFabIntegration
                 MaxResultsCount = maxResults
             };
 
-            PlayFabClientAPI.GetLeaderboardAroundPlayer(request, OnGetLeaderboardAroundPlayer, OnFailedToGetLeaderboardAroundPlayer);
+            PlayFabClientAPI.GetLeaderboardAroundPlayer(
+                request, 
+                OnGetLeaderboardAroundPlayer, 
+                OnFailedToGetLeaderboardAroundPlayer
+                );
         }
 
         private void OnGetLeaderboardAroundPlayer(GetLeaderboardAroundPlayerResult results)
         {
-            Debug.Log("Succesfully got leaderboard around player");
+            PlayFabLogging.Log("Succesfully got leaderboard around player");
             onGetLeaderboardEvent?.Invoke(results.Leaderboard);
         }
 
         private void OnFailedToGetLeaderboardAroundPlayer(PlayFabError error)
         {
-            Debug.Log("Failed to get leaderboard around player");
+            PlayFabLogging.LogError("Failed to get leaderboard around player", error);
             onGetLeaderboardEvent?.Invoke(null);
         }
 

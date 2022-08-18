@@ -18,50 +18,41 @@ namespace PlayFabIntegration
         /// The callback returns a dictionnary containing all the title datas
         /// </summary>
         /// <param name="onGetResult"> Callback returning a dictionnary with the title datas </param>
-        /// <param name="specificKey"> If a key is specified, the dictionnary will only contain the specific key </param>
-        public void GetTitleDatas(Action<Dictionary<string, string>> onGetResult, string specificKey = null)
+        /// <param name="keys"> If a list of keys is specified, the dictionnary will only contain those keys </param>
+        public void GetTitleDatas(Action<Dictionary<string, string>> onGetResult, List<string> keys = null)
         {
+            PlayFabLogging.Log("Attempt to get title datas");
             onGetTitleDatasEvent = onGetResult;
-            PlayFabClientAPI.GetTitleData(new GetTitleDataRequest(), OnGetTitleDatas, OnFailedToGetDatas, specificKey);
+
+            var request = new GetTitleDataRequest
+            {
+                Keys = keys
+            };
+
+            PlayFabClientAPI.GetTitleData(
+                request,
+                OnGetTitleDatas,
+                OnFailedToGetDatas
+                );
         }
 
         private void OnGetTitleDatas(GetTitleDataResult result)
         {
             if (result == null)
             {
-                Debug.Log("Title data was null");
+                PlayFabLogging.Log("Title data was null");
                 onGetTitleDatasEvent?.Invoke(null);
                 return;
             }
 
-            if (result.CustomData != null) //If the function was called with a specific key
-            {
-                string uniqueKey = result.CustomData.ToString();
-                if (result.Data.ContainsKey(uniqueKey))
-                {
-                    Debug.Log($"Succesfully got result at key {uniqueKey} : {result.Data[uniqueKey]}");
-                    Dictionary<string, string> uniqueData = new Dictionary<string, string>
-                    {
-                        {uniqueKey, result.Data[uniqueKey] }
-                    };
-                    onGetTitleDatasEvent?.Invoke(uniqueData);
-                }
-                else
-                {
-                    Debug.Log($"Title datas do not contain \"{uniqueKey}\"");
-                    onGetTitleDatasEvent?.Invoke(null);
-                }
-            }
-            else
-            {
-                Debug.Log("Succesfully got title datas");
-                onGetTitleDatasEvent?.Invoke(result.Data);
-            }
+
+            PlayFabLogging.Log("Succesfully got title datas");
+            onGetTitleDatasEvent?.Invoke(result.Data);
         }
 
         private void OnFailedToGetDatas(PlayFabError error)
         {
-            Debug.Log($"Couldn't get title data {error.GenerateErrorReport()}");
+            PlayFabLogging.LogError("Couldn't get title datas", error);
             onGetTitleDatasEvent?.Invoke(null);
         }
     }

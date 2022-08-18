@@ -55,15 +55,18 @@ namespace PlayFabIntegration
             {
                 Data = datas
             };
-            PlayFabClientAPI.UpdateUserData(request, OnSucceed, OnFailedToUpdatePlayerData);
+
+            PlayFabClientAPI.UpdateUserData(
+                request, 
+                OnSucceed, 
+                (error) => PlayFabLogging.LogError("Couldn't update player data", error)
+                );
         }
 
         private void OnSucceed(UpdateUserDataResult result)
         {
-            Debug.Log($"Succesfully updated player data {result.CustomData}");
+            PlayFabLogging.Log($"Succesfully updated player data");
         }
-
-
 
         #endregion
 
@@ -77,19 +80,25 @@ namespace PlayFabIntegration
         public void GetAllPlayerDatas(Action<Dictionary<string, string>> onGetPlayerDatas)
         {
             onGetAllDatasEvent = onGetPlayerDatas;
-            PlayFabClientAPI.GetUserData(new GetUserDataRequest(), OnGetAllDatas, OnFailedToGetAllDatas);
+
+            var request = new GetUserDataRequest { };
+
+            PlayFabClientAPI.GetUserData(
+                request,
+                OnGetAllDatas,
+                OnFailedToGetAllDatas);
         }
 
         private void OnGetAllDatas(GetUserDataResult result)
         {
             if (result.Data == null)
             {
-                Debug.Log("User Data was null");
+                PlayFabLogging.Log("User Data was null");
                 onGetAllDatasEvent?.Invoke(null);
                 return;
             }
 
-            Debug.Log("Successfully got player datas");
+            PlayFabLogging.Log("Successfully got player datas");
             Dictionary<string, string> dict = new Dictionary<string, string>();
             foreach (var item in result.Data)
             {
@@ -110,26 +119,33 @@ namespace PlayFabIntegration
         public void GetSinglePlayerData(string dataName, Action<string> onGetPlayerData)
         {
             onGetSingleDataEvent = onGetPlayerData;
-            PlayFabClientAPI.GetUserData(new GetUserDataRequest(), OnGetSingleData, OnFailedToGetSingleData, dataName);
+
+            var request = new GetUserDataRequest { };
+
+            PlayFabClientAPI.GetUserData(
+                request, 
+                OnGetSingleData, 
+                OnFailedToGetSingleData, 
+                dataName);
         }
 
         private void OnGetSingleData(GetUserDataResult result)
         {
             if (result.Data == null)
             {
-                Debug.Log("User Data was null");
+                PlayFabLogging.Log("User Data was null");
                 onGetSingleDataEvent?.Invoke(null);
                 return;
             }
 
             if (!result.Data.ContainsKey(result.CustomData.ToString()))
             {
-                Debug.Log($"User Data didn't contain {result.CustomData}");
+                PlayFabLogging.Log($"User Data didn't contain {result.CustomData}");
                 onGetSingleDataEvent?.Invoke(null);
                 return;
             }
 
-            Debug.Log("Succesfully got single data");
+            PlayFabLogging.Log("Succesfully got single data");
             string value = result.Data[result.CustomData.ToString()].Value;
             onGetSingleDataEvent?.Invoke(value);
         }
@@ -158,8 +174,15 @@ namespace PlayFabIntegration
         /// <param name="onGetDatas">Callback returning the object at the specified key</param>
         public void GetSinglePlayerData<T>(string dataName, Action<T> onGetDatas) 
         {
-            GenericDataRequestInfo<T> newInfo = new GenericDataRequestInfo<T>(dataName, onGetDatas);
-            PlayFabClientAPI.GetUserData(new GetUserDataRequest(), OnGetGenericData<T>, OnFailedToGetGenericData, newInfo);
+            GenericDataRequestInfo<T> requestInfo = new GenericDataRequestInfo<T>(dataName, onGetDatas);
+
+            var request = new GetUserDataRequest { };
+
+            PlayFabClientAPI.GetUserData(
+                request, 
+                OnGetGenericData<T>, 
+                OnFailedToGetGenericData, 
+                requestInfo);
         }
 
         private void OnGetGenericData<T>(GetUserDataResult result)
@@ -169,14 +192,14 @@ namespace PlayFabIntegration
 
             if (result == null)
             {
-                Debug.Log("User data was null");
+                PlayFabLogging.Log("User data was null");
                 info.onComplete?.Invoke(default(T));
                 return;
             }
 
             if (!result.Data.ContainsKey(key))
             {
-                Debug.Log($"User data didn't contain {key}");
+                PlayFabLogging.Log($"User data didn't contain {key}");
                 info.onComplete?.Invoke(default(T));
                 return;
             }
@@ -187,12 +210,12 @@ namespace PlayFabIntegration
             {
                 T newObject = JsonUtility.FromJson<T>(data);
                 info.onComplete?.Invoke(newObject);
-                Debug.Log($"Succesfully converted {key} to {typeof(T)}");
+                PlayFabLogging.Log($"Succesfully converted {key} to {typeof(T)}");
             }
             catch
             {
                 info.onComplete?.Invoke(default(T));
-                Debug.Log($"Couldn't convert {key} to {typeof(T)}");
+                PlayFabLogging.Log($"Couldn't convert {key} to {typeof(T)}");
             }
 
         }
@@ -202,25 +225,21 @@ namespace PlayFabIntegration
         #endregion
 
         #region ERRORS
-        private void OnFailedToUpdatePlayerData(PlayFabError error)
-        {
-            Debug.Log($"Couldn't update player data : {error.GenerateErrorReport()}");
-        }
         private void OnFailedToGetSingleData(PlayFabError error)
         {
-            Debug.Log($"Couldn't get single player data : {error.GenerateErrorReport()}");
+            PlayFabLogging.LogError("Couldn't get single player data", error);
             onGetSingleDataEvent?.Invoke(null);
         }
 
         private void OnFailedToGetAllDatas(PlayFabError error)
         {
-            Debug.Log($"Couldn't get all player datas : {error.GenerateErrorReport()}");
+            PlayFabLogging.LogError("Couldn't get all player datas", error);
             onGetAllDatasEvent?.Invoke(null);
         }
 
         private void OnFailedToGetGenericData(PlayFabError error)
         {
-            Debug.Log($"Couldn't get single player generic data : {error.GenerateErrorReport()}");
+            PlayFabLogging.LogError("Couldn't get single player generic data", error);
             onGetGenericDataEvent?.Invoke(null);
         }
         #endregion

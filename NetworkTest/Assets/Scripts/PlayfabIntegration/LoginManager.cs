@@ -33,7 +33,7 @@ namespace PlayFabIntegration
         {
             if (IsLoggedIn)
             {
-                Debug.Log("Already logged in");
+                PlayFabLogging.Log("Already logged in");
                 return;
             }
 
@@ -52,7 +52,7 @@ namespace PlayFabIntegration
                     break;
             }
 
-            LoginWithCustomIDRequest request = new LoginWithCustomIDRequest
+            var request = new LoginWithCustomIDRequest
             {
                 CustomId = ID,
                 CreateAccount = true,
@@ -62,12 +62,16 @@ namespace PlayFabIntegration
                 }
             };
 
-            PlayFabClientAPI.LoginWithCustomID(request, OnLoggedIn, OnError);
+            PlayFabClientAPI.LoginWithCustomID(
+                request,
+                OnLoggedIn,
+                OnError
+                );
         }
 
         private void OnLoggedIn(LoginResult result)
         {
-            Debug.Log("Successful login!");
+            PlayFabLogging.Log("Successful login!");
             EntityKey = result.EntityToken.Entity;            
             IsLoggedIn = true;
             LoggedInPlayFabID = result.PlayFabId;
@@ -88,35 +92,11 @@ namespace PlayFabIntegration
 
         private void OnError(PlayFabError error)
         {
-            Debug.Log($"Failed to login : {error.GenerateErrorReport()}");
+            PlayFabLogging.LogError("Failed to login" , error);
             onFailedToLogIn?.Invoke();
         }
 
         #endregion
-
-        //#region SERVER LOGIN
-        //public void LoginAsServer()
-        //{
-        //    PlayFabServerAPI.LoginWithServerCustomId(
-        //        new PlayFab.ServerModels.LoginWithServerCustomIdRequest
-        //        {
-        //            ServerCustomId = SystemInfo.deviceUniqueIdentifier                   
-        //        },
-        //        OnServerLogin,
-        //        OnServerFailedLogin                
-        //        );
-        //}
-
-        //private void OnServerLogin(PlayFab.ServerModels.ServerLoginResult result)
-        //{
-        //    Debug.Log("Logged in as server");
-        //}
-
-        //private void OnServerFailedLogin(PlayFabError error)
-        //{
-        //    Debug.Log($"Couldn't login as server : {error.GenerateErrorReport()}");
-        //}
-        //#endregion
 
         #region DISPLAY NAME
         public void UpdateDisplayName(string newName)
@@ -126,19 +106,18 @@ namespace PlayFabIntegration
                 DisplayName = newName
             };
 
-            PlayFabClientAPI.UpdateUserTitleDisplayName(request, OnUpdatedDisplayName, OnFailedToUpdateDisplayName);
+            PlayFabClientAPI.UpdateUserTitleDisplayName(
+                request,
+                OnUpdatedDisplayName,
+                (error) => PlayFabLogging.LogError("Failed to update display name", error)
+                );
         }
 
         private void OnUpdatedDisplayName(UpdateUserTitleDisplayNameResult result)
         {
-            Debug.Log($"Successfully updated display name to { result.DisplayName}");
+            PlayFabLogging.Log($"Successfully updated display name to { result.DisplayName}");
             DisplayName = result.DisplayName;
             onUpdatedDisplayName?.Invoke(DisplayName);
-        }
-
-        private void OnFailedToUpdateDisplayName(PlayFabError error)
-        {
-            Debug.Log($"Failed to update display name : {error.GenerateErrorReport()}");
         }
         #endregion
     }

@@ -115,11 +115,6 @@ public class TestEditor : Editor
         }
 
         GUILayout.Space(10);
-        GUILayout.Label("---MATCHMAKING---");
-        test.matchmakingQueue = EditorGUILayout.TextField("Queue name", test.matchmakingQueue);
-        test.maxMatchmakingTime = EditorGUILayout.IntField("Max Matchmaking time", test.maxMatchmakingTime);
-
-        GUILayout.Space(10);
         GUILayout.Label("---LOBBIES---");
         test.lobbyID = EditorGUILayout.TextField("Lobby ID", test.lobbyID);
         test.lobbyName = EditorGUILayout.TextField("Lobby Name", test.lobbyName);

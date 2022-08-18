@@ -35,7 +35,7 @@ namespace PlayFabIntegration
         public PlayerDataManager PlayerDataManager { get; private set; } = new PlayerDataManager();
         public TitleDataManager TitleDataManager { get; private set; } = new TitleDataManager();
         public MatchmakingManager MatchmakingManager { get; private set; } = new MatchmakingManager();
-        public ServerConnectionManager ServerConnectionManager { get; private set; } = new ServerConnectionManager();
+        public ServerRequestManager ServerConnectionManager { get; private set; } = new ServerRequestManager();
         public LobbyManager LobbyManager { get; private set; } = new LobbyManager();
 
         private void Update()

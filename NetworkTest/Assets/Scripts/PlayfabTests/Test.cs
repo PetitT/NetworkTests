@@ -25,9 +25,6 @@ public class Test : MonoBehaviour
 
     [HideInInspector] public int testElo;
 
-    [HideInInspector] public string matchmakingQueue;
-    [HideInInspector] public int maxMatchmakingTime;
-
     [HideInInspector] public string lobbyArrangementString;
     [HideInInspector] public string lobbyID;
     [HideInInspector] public string lobbyName;
@@ -80,7 +77,7 @@ public class Test : MonoBehaviour
 
     public void GetSpecificTitleData()
     {
-        playFabManager.TitleDataManager.GetTitleDatas(OnGetTitleDatas, specificTitleDataKey);
+        playFabManager.TitleDataManager.GetTitleDatas(OnGetTitleDatas, new List<string>() { specificTitleDataKey });
     }
 
     private void OnGetTitleDatas(Dictionary<string, string> result)
@@ -151,7 +148,7 @@ public class Test : MonoBehaviour
             return;
         }
 
-        Debug.Log($"BRUUUUUUUUH {obj.myString}");
+        //Debug.Log($"BRUUUUUUUUH {obj.myString}");
     }
 
     public void SendDataToLeaderboard()
@@ -193,8 +190,8 @@ public class Test : MonoBehaviour
     private void Join1v1Matchmaking()
     {
         playFabManager.MatchmakingManager.StartMatchmaking(
-                matchmakingQueue,
-                maxMatchmakingTime,
+                "QuickMatch",
+                30,
                 new
                 {
                     elo = testElo,
@@ -214,7 +211,7 @@ public class Test : MonoBehaviour
     {
         playFabManager.MatchmakingManager.StartMatchmaking(
                 "2vs2",
-                maxMatchmakingTime,
+                30,
                 new
                 {
                     elo = testElo,
@@ -278,35 +275,50 @@ public class Test : MonoBehaviour
     }
 
     private void OnGotLobby(GetLobbyResult result)
-    {        
-        if (result.Lobby.LobbyData.ContainsKey("name"))
+    {
+        if (result.Lobby.LobbyData == null)
         {
-            lobbyName = result.Lobby.LobbyData["name"];
+            Debug.Log("Lobby has no lobby data");
+            return;
         }
+        if (!result.Lobby.LobbyData.ContainsKey("name"))
+        {
+            Debug.Log("Lobby has no name");
+            return;
+        }
+
+        lobbyName = result.Lobby.LobbyData["name"];
+        Debug.Log(lobbyName);
     }
 
     private void OnGUI()
     {
-        if (GUI.Button(new Rect(0, 0, 100, 50), "Random Login")) { CreateNewRandomAccount(); }
-        if (GUI.Button(new Rect(100, 0, 100, 50), "Device Login")) { LoginWithDeviceID(); }
-        if (GUI.Button(new Rect(0, 50, 100, 50), "QuickMatch")) { Join1v1Matchmaking(); }
-        if (GUI.Button(new Rect(100, 50, 100, 50), "2vs2")) { Join2v2Matchmaking(); }
-        if (GUI.Button(new Rect(0, 150, 100, 50), "Add elo")) { testElo++; }
-        if (GUI.Button(new Rect(0, 100, 175, 50), "Cancel all matchmaking")) { playFabManager.MatchmakingManager.CancelAllMatchmakingQueuesForUser(); }
+        if (!playFabManager.IsLoggedIn)
+        {
+            if (GUI.Button(new Rect(0, 0, 100, 50), "Random Login")) { CreateNewRandomAccount(); }
+            if (GUI.Button(new Rect(100, 0, 100, 50), "Device Login")) { LoginWithDeviceID(); }
+        }
+        else
+        {
+            if (GUI.Button(new Rect(0, 0, 100, 50), "QuickMatch")) { Join1v1Matchmaking(); }
+            if (GUI.Button(new Rect(100, 0, 100, 50), "2vs2")) { Join2v2Matchmaking(); }
+            if (GUI.Button(new Rect(0, 100, 100, 50), "Add elo")) { testElo++; }
+            if (GUI.Button(new Rect(0, 50, 175, 50), "Cancel all matchmaking")) { playFabManager.MatchmakingManager.CancelAllMatchmakingQueuesForUser(); }
 
-        string displayName = playFabManager.IsLoggedIn ? $"Logged in as -{playFabManager.DisplayName}-" : "Not connected";
-        GUI.Label(new Rect(210, 15, 200, 50), displayName);
-        GUI.Label(new Rect(210, 65, 200, 50), playFabManager.MatchmakingManager.Status);
-        GUI.Label(new Rect(110, 165, 200, 50), $"Elo : {testElo}");
+            string displayName = playFabManager.IsLoggedIn ? $"Logged in as -{playFabManager.DisplayName}-" : "Not connected";
+            GUI.Label(new Rect(5, Screen.height - 50, 200, 50), displayName);
+            GUI.Label(new Rect(210, 15, 200, 50), playFabManager.MatchmakingManager.Status);
+            GUI.Label(new Rect(110, 115, 200, 50), $"Elo : {testElo}");
 
-        if (GUI.Button(new Rect(Screen.width - 100, 0, 100, 50), "Create Lobby")) { CreateLobby(); }
-        if (GUI.Button(new Rect(Screen.width - 100, 50, 100, 50), "Join Lobby")) { JoinLobby(); }
-        if (GUI.Button(new Rect(Screen.width - 100, 100, 100, 50), "Leave lobby")) { LeaveCurrentLobby(); }
-        if (GUI.Button(new Rect(Screen.width - 100, 150, 100, 50), "Find Lobbies")) { FindLobbies(); }
-        if (GUI.Button(new Rect(Screen.width - 100, 200, 100, 50), "Set Lobby Name")) { SetLobbyName(); };
-        lobbyArrangementString = GUI.TextField(new Rect(Screen.width - 200, 0, 100, 25), lobbyArrangementString);
-        lobbyID = GUI.TextField(new Rect(Screen.width - 200, 25, 100, 25), lobbyID);
-        lobbyName = GUI.TextField(new Rect(Screen.width - 200, 50, 100, 25), lobbyName);
+            if (GUI.Button(new Rect(Screen.width - 100, 0, 100, 50), "Create Lobby")) { CreateLobby(); }
+            if (GUI.Button(new Rect(Screen.width - 100, 50, 100, 50), "Join Lobby")) { JoinLobby(); }
+            if (GUI.Button(new Rect(Screen.width - 100, 100, 100, 50), "Leave lobby")) { LeaveCurrentLobby(); }
+            if (GUI.Button(new Rect(Screen.width - 100, 150, 100, 50), "Find Lobbies")) { FindLobbies(); }
+            if (GUI.Button(new Rect(Screen.width - 100, 200, 100, 50), "Set Lobby Name")) { SetLobbyName(); };
+            lobbyArrangementString = GUI.TextField(new Rect(Screen.width - 200, 0, 100, 25), lobbyArrangementString);
+            lobbyID = GUI.TextField(new Rect(Screen.width - 200, 25, 100, 25), lobbyID);
+            lobbyName = GUI.TextField(new Rect(Screen.width - 200, 50, 100, 25), lobbyName);
+        }
     }
 }
 
