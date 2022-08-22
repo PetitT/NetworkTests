@@ -12,26 +12,43 @@ public class OculusFriends : MonoBehaviour
     ulong roomID;
     string inviteToken;
 
-    public TMP_Text roomText, player1Text, player2Text, invitedText, ownerText, idText, userJoinedText, userInviteText;
+    public TMP_Text roomText, player1Text, player2Text, invitedText, ownerText, idText, userJoinedText, userInviteText, receivedInviteText, randomText;
 
     void Start()
     {
-        Core.AsyncInitialize().OnComplete(OnInitialize);
-        Entitlements.IsUserEntitledToApplication().OnComplete(EntitlementCallback);
-    }
-
-    private void EntitlementCallback(Message message)
-    {
-        if (message.IsError) { Debug.Log("You are not entitled to the app..."); }
-        else { Debug.Log("You are entitled to the app !"); }
+        Core.AsyncInitialize().OnComplete(OnInitialize); //This must be called before doing anything
     }
 
     private void OnInitialize(Message message)
     {
-        Debug.Log("Attempt to initialize");
-        //Users.GetLoggedInUserFriends().OnComplete(OnGotFriends); //Returns a list of friends who own the app
-        Users.GetLoggedInUser().OnComplete(OnGotUser);
-        StartCoroutine(UpdateRoomStatus());
+        Debug.Log("Initialized");
+        Entitlements.IsUserEntitledToApplication().OnComplete(EntitlementCallback); //Check to see wheter the user really owns the app
+    }
+
+    private void EntitlementCallback(Message message)
+    {
+        if (message.IsError)
+        {
+            Debug.Log("You are not entitled to the app...");
+        }
+        else
+        {
+            Debug.Log("You are entitled to the app !");
+            Users.GetLoggedInUser().OnComplete(OnGotUser); //Returns the current user
+            Users.GetLoggedInUserFriends().OnComplete(OnGotFriends); //Returns a list of friends who own the app
+        }
+    }
+
+    private void OnGotUser(Message<User> message)
+    {
+        if (message.IsError) { Debug.Log("Couldn't get user"); return; }
+        User user = message.GetUser();
+
+        userID = user.ID;
+        Debug.Log($"User : {user.DisplayName} - {user.PresenceStatus} - {user.Presence}");
+
+        Rooms.SetRoomInviteAcceptedNotificationCallback(OnInviteAccepted); //This does not seem to work
+        Rooms.SetRoomInviteReceivedNotificationCallback(OnInviteReceived); //Called on receiver as soon as they receive the invite
     }
 
     private void OnGotFriends(Message<UserList> message)
@@ -43,45 +60,61 @@ public class OculusFriends : MonoBehaviour
         }
     }
 
-    private void OnGotUser(Message<User> message)
+    //I don't know where or when it should be called...
+    private void OnInviteAccepted(Message<string> message)
     {
-        if (message.IsError) { Debug.Log("Couldn't get user"); return; }
-        User user = message.GetUser();
+        Debug.Log("Accept invitation message");
+        if (message.IsError) { Debug.Log("Error Message"); return; }
 
-        userID = user.ID;
-        Debug.Log($"User : {user.DisplayName} - {user.PresenceStatus} - {user.Presence}");
-        Rooms.GetCurrentForUser(user.ID).OnComplete(OnGotCurrentRoom);
+        string roomID = message.GetString();
+        Debug.Log($"Room Id is {roomID}");
+        receivedInviteText.text = roomID;
+
+        Rooms.Join2(Convert.ToUInt64(roomID), new RoomOptions { });
     }
 
-    private void OnGotCurrentRoom(Message<Room> message)
+    //There should be a validation by the player before doing anything
+    private void OnInviteReceived(Message<RoomInviteNotification> message)
     {
-        if (message.IsError)
-        {
-            Debug.Log("No room");
-            return;
-        }
+        Debug.Log("Received invitation message");
+        if (message.IsError) { Debug.Log("Error Message"); return; }
 
-        Debug.Log(message.Data.UsersOptional[0].DisplayName);
+        Debug.Log($"Invitation : Room id is {message.Data.RoomID}, Invite comes from {message.Data.SenderID}");
+        RoomOptions options = new RoomOptions();
+        options.SetTurnOffUpdates(false);
+        Rooms.Join2(message.Data.RoomID, new RoomOptions { }).OnComplete(OnJoinedRoom);
+    }
+
+    private void OnJoinedRoom(Message<Room> message)
+    {
+        if (message.IsError) { Debug.Log("Error in joining room"); return; }
+        Debug.Log($"Joined room {message.Data.ID}");
+        GetCurrentRoomInfo(message);
+        Rooms.SetUpdateNotificationCallback(GetCurrentRoomInfo);
     }
 
     public void CreateRoom()
     {
-        RoomOptions options = new RoomOptions();
-        Rooms.CreateAndJoinPrivate2(RoomJoinPolicy.Everyone, 10, options).OnComplete(OnCreatedRoom);
+        RoomOptions roomOptions = new RoomOptions();
+        roomOptions.SetDataStore("Name", UnityEngine.Random.Range(100, 999).ToString());
+        roomOptions.SetTurnOffUpdates(false);
+        Rooms.CreateAndJoinPrivate2(RoomJoinPolicy.Everyone, 10, roomOptions).OnComplete(OnCreatedRoom);
     }
 
     private void OnCreatedRoom(Message<Room> message)
     {
         Debug.Log($"Created room");
         roomID = message.Data.ID;
-        Rooms.UpdateOwner(roomID, userID);
-        Rooms.UpdateDataStore(roomID, new Dictionary<string, string>() { { "Name", UnityEngine.Random.Range(100, 999).ToString() } });
+        GetCurrentRoomInfo(message);
+        Rooms.UpdateOwner(message.Data.ID, userID);
         Rooms.GetInvitableUsers2().OnComplete(OnGotInvitableUsers);
+        Rooms.SetUpdateNotificationCallback(GetCurrentRoomInfo);
+        //StartCoroutine(UpdateRandomNumber());
     }
 
     private void OnGotInvitableUsers(Message<UserList> message)
     {
-        if(message.Data == null) { Debug.Log("No invitable friends"); return; }
+        if (message.Data == null) { Debug.Log("No invitable friends"); return; }
         Debug.Log($"{message.Data.Count} invitable friends");
         foreach (var item in message.Data)
         {
@@ -94,17 +127,19 @@ public class OculusFriends : MonoBehaviour
 
     public void ManualInvite()
     {
+        Debug.Log("Manual invitation");
         Rooms.InviteUser(roomID, inviteToken);
     }
 
-    private void InviteWithuserFlow()
+    public void InviteWithuserFlow()
     {
-        Debug.Log("ATTEMPT TO INVITE");
+        Debug.Log("Invitation with user flow");
         Rooms.LaunchInvitableUserFlow(roomID);
     }
 
     public void LeaveCurrent()
     {
+        Debug.Log("Attempt to leave current room");
         Rooms.GetCurrent().OnComplete((message) =>
         {
             if (message.IsError) return;
@@ -115,19 +150,26 @@ public class OculusFriends : MonoBehaviour
             {
                 if (message.IsError) return;
                 roomID = 0;
+                GetCurrentRoomInfo(message);
                 Debug.Log("Left room");
             });
         });
-
     }
 
-    private IEnumerator UpdateRoomStatus()
+    private IEnumerator UpdateRandomNumber()
     {
         for (int i = 0; i < 1000; i++)
         {
-            Rooms.GetCurrent().OnComplete(DisplayRoomInfo);
-            yield return new WaitForSeconds(2);
+            Debug.Log("Update random");
+            Rooms.UpdateDataStore(roomID, new Dictionary<string, string>() { { "Random", UnityEngine.Random.Range(100, 999).ToString() } })
+                .OnComplete((room) => GetCurrentRoomInfo(room));
+            yield return new WaitForSeconds(5);
         }
+    }
+
+    private void GetCurrentRoomInfo(Message<Room> callback)
+    {
+        Rooms.GetCurrent().OnComplete((room) => DisplayRoomInfo(room));
     }
 
     private void DisplayRoomInfo(Message<Room> message)
@@ -135,36 +177,46 @@ public class OculusFriends : MonoBehaviour
         if (message.IsError) { return; }
 
         Room room = message.Data;
-        string roomName = "";
 
         if (room.DataStore.ContainsKey("Name"))
         {
-            roomName = room.DataStore["Name"];
+            string roomName = room.DataStore["Name"];
             roomText.text = $"Room name : {room.DataStore["Name"]}";
         }
         else
         {
-            roomText.text = "";
+            roomText.text = "No Name...";
         }
 
-        Debug.Log($"Room -{roomName}- , ID : {room.ID}, info : {room.UsersOptional.Count} users, owner is { room.OwnerOptional.DisplayName}");
+        if (room.DataStore.ContainsKey("Random"))
+        {
+            string randomValue = room.DataStore["Random"];
+            randomText.text = randomValue;
+        }
+        else
+        {
+            randomText.text = "No Random...";
+        }
+
+        Debug.Log($"Room ID : {room.ID}, info : {room.UsersOptional.Count} users, owner is { room.OwnerOptional.DisplayName}");
 
         ownerText.text = $"Owner : {room.OwnerOptional.DisplayName}";
 
         if (room.UsersOptional == null)
         {
-            player1Text.text = "";
-            player2Text.text = "";
+            player1Text.text = "...";
+            player2Text.text = "...";
         }
-        if (room.UsersOptional.Count >= 1)
+        else if (room.UsersOptional.Count == 1)
         {
             player1Text.text = room.UsersOptional[0].DisplayName;
+            player2Text.text = "Waiting...";
         }
-        if (room.UsersOptional.Count == 2)
+        else if (room.UsersOptional.Count == 2)
         {
+            player1Text.text = room.UsersOptional[0].DisplayName;
             player2Text.text = room.UsersOptional[1].DisplayName;
         }
-
 
         if (room.InvitedUsersOptional != null)
         {

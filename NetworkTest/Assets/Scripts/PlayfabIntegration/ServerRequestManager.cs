@@ -10,13 +10,14 @@ namespace PlayFabIntegration
 {
 
     /// <summary>
-    /// This class allows a client to manually request for a server. It serves as testing purposes, as a client should not be able to do that in production
+    /// This class allows a client to manually request for a server. 
     /// </summary>
     public class ServerRequestManager
     {
+        //We need the networkmanager to access the config file, which is shit
         CustomNetworkManager networkManager => NetworkManager.singleton as CustomNetworkManager;
 
-        public void RequestMultiplayerServer()
+        public void RequestMultiplayerServer(Action<RequestMultiplayerServerResponse> onGotServer)
         {
             if (networkManager == null)
             {
@@ -34,15 +35,18 @@ namespace PlayFabIntegration
 
             PlayFabMultiplayerAPI.RequestMultiplayerServer(
                 request,
-                OnRequestMultiplayerServer,
-                (error) => PlayFabLogging.LogError("Couldn't request multiplayer server", error)
-                );
+                (response) =>
+                {
+                    PlayFabLogging.Log("Requested multiplayer server");
+                    //networkManager.ConnectToServer(response.IPV4Address, (ushort)response.Ports[0].Num);
+                    onGotServer?.Invoke(response);
+                },
+                (error) =>
+                {
+                    PlayFabLogging.LogError("Couldn't request multiplayer server", error);
+                    onGotServer?.Invoke(null);
+                });
         }
 
-        private void OnRequestMultiplayerServer(RequestMultiplayerServerResponse response)
-        {
-            PlayFabLogging.Log("Requested multiplayer server");
-            networkManager.ConnectToServer(response.IPV4Address, (ushort)response.Ports[0].Num);
-        }
     }
 }
