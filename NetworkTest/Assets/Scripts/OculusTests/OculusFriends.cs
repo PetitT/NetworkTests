@@ -203,7 +203,6 @@ public class OculusFriends : MonoBehaviour
         });
     }
 
-
     public void StartGame()
     {
         PlayFabManager.Instance.ServerConnectionManager.RequestMultiplayerServer(OnGotServer);
@@ -275,7 +274,10 @@ public class OculusFriends : MonoBehaviour
 
     private void OnApplicationQuit()
     {
-        LeaveCurrent();
+        if (roomID != 0)
+        {
+            Rooms.Leave(roomID);
+        }
     }
 }
 

@@ -1,9 +1,9 @@
 {
     "m_SelectedDeviceId": "1WMHH841Z10482",
     "m_SelectedPackage": {
-        "deviceId": "",
-        "name": "",
-        "processId": 0,
+        "deviceId": "1WMHH841Z10482",
+        "name": "com.LowTeeGames.Networktest",
+        "processId": 21572,
         "exited": false
     },
     "m_SelectedPriority": 0,
@@ -37,6 +37,18 @@
             "name": "com.LowTeeGames.Networktest",
             "processId": 15412,
             "exited": true
+        },
+        {
+            "deviceId": "1WMHH841Z10482",
+            "name": "com.LowTeeGames.Networktest",
+            "processId": 21155,
+            "exited": false
+        },
+        {
+            "deviceId": "1WMHH841Z10482",
+            "name": "com.LowTeeGames.Networktest",
+            "processId": 21572,
+            "exited": false
         }
     ],
     "m_Tags": {
