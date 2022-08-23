@@ -3,29 +3,25 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class MirrorMovement : NetworkBehaviour
 {
     public float MovementSpeed = 5f;
-    private bool active = true;
+    CharInputs charInputs;
+
     public override void OnStartAuthority()
     {
-        active = true;
+        charInputs = new CharInputs();
+        charInputs.Character.Enable();
     }
 
     private void Update()
     {
-        if (active && !isServer)
-            Move();
-    }
-
-    private void Move()
-    {
-        float X = Input.GetAxisRaw("Horizontal");
-        float Z = Input.GetAxisRaw("Vertical");
-
-        Vector3 movement = new Vector3(X, 0, Z);
-
-        transform.Translate(movement * MovementSpeed * Time.deltaTime);
+        if (hasAuthority && !isServer)
+        {
+            Vector2 movement = charInputs.Character.Movement.ReadValue<Vector2>();
+            transform.Translate(new Vector3(movement.x, 0, movement.y) * MovementSpeed * Time.deltaTime);
+        }
     }
 }

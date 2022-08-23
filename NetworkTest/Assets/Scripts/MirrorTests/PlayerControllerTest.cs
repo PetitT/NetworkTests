@@ -7,24 +7,27 @@ public class PlayerControllerTest : NetworkBehaviour
 {
     private BallMovement ball;
     private BallMovement _ball => ball ??= FindObjectOfType<BallMovement>();
+    CharInputs inputs;
 
-
-    void Update()
+    private void Start()
     {
-        if (hasAuthority)
-        {
-            if (Input.GetKeyDown(KeyCode.Space))
-            {
-                BallHitInfo hitInfo = new BallHitInfo
-                {
-                    networkTime = NetworkTime.time,
-                    hitPosition = _ball.transform.position
-                };
+        if (!hasAuthority) return;
 
-                CmdRevertBall(hitInfo);
-                _ball.HitBall(hitInfo);
-            }
-        }
+        inputs = new CharInputs();
+        inputs.Enable();
+        inputs.Character.SpawnBall.performed += SpawnBall_performed;
+    }
+
+    private void SpawnBall_performed(UnityEngine.InputSystem.InputAction.CallbackContext obj)
+    {
+        BallHitInfo hitInfo = new BallHitInfo
+        {
+            networkTime = NetworkTime.time,
+            hitPosition = _ball.transform.position
+        };
+
+        CmdRevertBall(hitInfo);
+        _ball.HitBall(hitInfo);
     }
 
     [Command]

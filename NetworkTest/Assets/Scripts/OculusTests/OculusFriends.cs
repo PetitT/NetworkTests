@@ -5,18 +5,45 @@ using System.Collections.Generic;
 using UnityEngine;
 using Oculus.Platform;
 using TMPro;
+using PlayFabIntegration;
+using PlayFab.MultiplayerModels;
 
 public class OculusFriends : MonoBehaviour
 {
     ulong userID;
     ulong roomID;
+    ulong notificationID;
+    string userName;
     string inviteToken;
 
-    public TMP_Text roomText, player1Text, player2Text, invitedText, ownerText, idText, userJoinedText, userInviteText, receivedInviteText, randomText;
+    public TMP_Text roomText, player1Text, player2Text, invitedText, ownerText, idText, userJoinedText, userInviteText, receivedInviteText, playWithMeText;
+    public GameObject multiplayerPanel;
+    bool loggedIntoPlayFab = false;
+    bool loggedIntoOculus = false;
 
     void Start()
     {
         Core.AsyncInitialize().OnComplete(OnInitialize); //This must be called before doing anything
+        PlayFabManager.Instance.LoginManager.LogInWithID();
+        PlayFabManager.Instance.LoginManager.onSuccessfulLogIn += LoginManager_onSuccessfulLogIn;
+    }
+
+    private void LoginManager_onSuccessfulLogIn(PlayFab.ClientModels.LoginResult obj)
+    {
+        loggedIntoPlayFab = true;
+        CheckToUpdateName();
+    }
+
+    private void CheckToUpdateName()
+    {
+        if (loggedIntoOculus && loggedIntoPlayFab)
+        {
+            if (PlayFabManager.Instance.DisplayName != userName)
+            {
+                Debug.Log($"Updating display name to {userName}");
+                PlayFabManager.Instance.LoginManager.UpdateDisplayName(userName);
+            }
+        }
     }
 
     private void OnInitialize(Message message)
@@ -34,7 +61,7 @@ public class OculusFriends : MonoBehaviour
         else
         {
             Debug.Log("You are entitled to the app !");
-            Users.GetLoggedInUser().OnComplete(OnGotUser); //Returns the current user
+            Users.GetLoggedInUser().OnComplete(OnGotUser); //Returns the current user (doesn't work in build but works in editor...)
             Users.GetLoggedInUserFriends().OnComplete(OnGotFriends); //Returns a list of friends who own the app
         }
     }
@@ -42,13 +69,18 @@ public class OculusFriends : MonoBehaviour
     private void OnGotUser(Message<User> message)
     {
         if (message.IsError) { Debug.Log("Couldn't get user"); return; }
-        User user = message.GetUser();
+        userID = message.GetUser().ID;
+        Users.Get(userID).OnComplete(OnGotSelfUser); //Since the message only returns a userID in build, we need to call this method to actually get the player info
+    }
 
-        userID = user.ID;
-        Debug.Log($"User : {user.DisplayName} - {user.PresenceStatus} - {user.Presence}");
-
+    private void OnGotSelfUser(Message<User> message)
+    {
+        loggedIntoOculus = true;
+        userName = message.GetUser().DisplayName;
+        Debug.Log($"User : {userName} - {message.GetUser().PresenceStatus} - {message.GetUser().Presence}");
         Rooms.SetRoomInviteAcceptedNotificationCallback(OnInviteAccepted); //This does not seem to work
         Rooms.SetRoomInviteReceivedNotificationCallback(OnInviteReceived); //Called on receiver as soon as they receive the invite
+        CheckToUpdateName();
     }
 
     private void OnGotFriends(Message<UserList> message)
@@ -78,11 +110,26 @@ public class OculusFriends : MonoBehaviour
     {
         Debug.Log("Received invitation message");
         if (message.IsError) { Debug.Log("Error Message"); return; }
-
+        multiplayerPanel.SetActive(true);
         Debug.Log($"Invitation : Room id is {message.Data.RoomID}, Invite comes from {message.Data.SenderID}");
+        Users.Get(message.Data.SenderID).OnComplete((user) => playWithMeText.text = $"Play with {user.Data.DisplayName} ?");
+        roomID = message.Data.RoomID;
+        notificationID = message.Data.ID;
+    }
+
+    public void AcceptInvitation()
+    {
+        multiplayerPanel.SetActive(false);
         RoomOptions options = new RoomOptions();
         options.SetTurnOffUpdates(false);
-        Rooms.Join2(message.Data.RoomID, new RoomOptions { }).OnComplete(OnJoinedRoom);
+        Rooms.Join2(roomID, options).OnComplete(OnJoinedRoom);
+    }
+
+    public void DeclineInvitation()
+    {
+        multiplayerPanel.SetActive(false);
+        roomID = 0;
+        Notifications.MarkAsRead(notificationID);
     }
 
     private void OnJoinedRoom(Message<Room> message)
@@ -109,7 +156,6 @@ public class OculusFriends : MonoBehaviour
         Rooms.UpdateOwner(message.Data.ID, userID);
         Rooms.GetInvitableUsers2().OnComplete(OnGotInvitableUsers);
         Rooms.SetUpdateNotificationCallback(GetCurrentRoomInfo);
-        //StartCoroutine(UpdateRandomNumber());
     }
 
     private void OnGotInvitableUsers(Message<UserList> message)
@@ -128,10 +174,11 @@ public class OculusFriends : MonoBehaviour
     public void ManualInvite()
     {
         Debug.Log("Manual invitation");
-        Rooms.InviteUser(roomID, inviteToken);
+        Rooms.InviteUser(roomID, inviteToken).OnComplete((response) => GetCurrentRoomInfo(response));
+        Rooms.GetInvitableUsers2().OnComplete(OnGotInvitableUsers); //An invite token for a user only works once, so we need to reset it after inviting them
     }
 
-    public void InviteWithuserFlow()
+    public void InviteWithUserFlow()
     {
         Debug.Log("Invitation with user flow");
         Rooms.LaunchInvitableUserFlow(roomID);
@@ -156,15 +203,16 @@ public class OculusFriends : MonoBehaviour
         });
     }
 
-    private IEnumerator UpdateRandomNumber()
+
+    public void StartGame()
     {
-        for (int i = 0; i < 1000; i++)
-        {
-            Debug.Log("Update random");
-            Rooms.UpdateDataStore(roomID, new Dictionary<string, string>() { { "Random", UnityEngine.Random.Range(100, 999).ToString() } })
-                .OnComplete((room) => GetCurrentRoomInfo(room));
-            yield return new WaitForSeconds(5);
-        }
+        PlayFabManager.Instance.ServerConnectionManager.RequestMultiplayerServer(OnGotServer);
+    }
+
+    private void OnGotServer(RequestMultiplayerServerResponse response)
+    {
+        ServerConnectionData serverConnectionData = new ServerConnectionData(response.IPV4Address, (ushort)response.Ports[0].Num);
+        Rooms.UpdateDataStore(roomID, new Dictionary<string, string> { { "Conn", JsonUtility.ToJson(serverConnectionData) } }).OnComplete((result) => GetCurrentRoomInfo(result));
     }
 
     private void GetCurrentRoomInfo(Message<Room> callback)
@@ -180,22 +228,11 @@ public class OculusFriends : MonoBehaviour
 
         if (room.DataStore.ContainsKey("Name"))
         {
-            string roomName = room.DataStore["Name"];
             roomText.text = $"Room name : {room.DataStore["Name"]}";
         }
         else
         {
             roomText.text = "No Name...";
-        }
-
-        if (room.DataStore.ContainsKey("Random"))
-        {
-            string randomValue = room.DataStore["Random"];
-            randomText.text = randomValue;
-        }
-        else
-        {
-            randomText.text = "No Random...";
         }
 
         Debug.Log($"Room ID : {room.ID}, info : {room.UsersOptional.Count} users, owner is { room.OwnerOptional.DisplayName}");
@@ -228,5 +265,28 @@ public class OculusFriends : MonoBehaviour
         }
 
         idText.text = room.ID.ToString();
+
+        if (room.DataStore.ContainsKey("Conn"))
+        {
+            ServerConnectionData data = JsonUtility.FromJson<ServerConnectionData>(room.DataStore["Conn"]);
+            FindObjectOfType<CustomNetworkManager>().ConnectToServer(data.ipv4Address, data.port);
+        }
+    }
+
+    private void OnApplicationQuit()
+    {
+        LeaveCurrent();
+    }
+}
+
+public class ServerConnectionData
+{
+    public string ipv4Address;
+    public ushort port;
+
+    public ServerConnectionData(string ipv4Address, ushort port)
+    {
+        this.ipv4Address = ipv4Address;
+        this.port = port;
     }
 }
