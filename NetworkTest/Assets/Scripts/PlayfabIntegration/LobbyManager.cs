@@ -10,9 +10,7 @@ namespace PlayFabIntegration
 {
     public class LobbyManager
     {
-        public event Action<CreateLobbyResult> onLobbyCreated;
         public event Action<JoinLobbyResult> onJoinedLobby;
-        private event Action<GetLobbyResult> onGetLobby;
         public bool IsInALobby => !string.IsNullOrEmpty(currentLobbyID);
 
         private string currentLobbyID;
@@ -33,7 +31,7 @@ namespace PlayFabIntegration
             return entityKey;
         }
 
-        public void CreateLobby()
+        public void CreateLobby(Action<CreateLobbyResult> onLobbyCreated = null)
         {
             if (IsInALobby)
             {
@@ -53,24 +51,32 @@ namespace PlayFabIntegration
             };
 
             PlayFabMultiplayerAPI.CreateLobby(
-                request,
-                OnCreatedLobby,
-                (error) => PlayFabLogging.LogError("Couldn't create lobby", error)
-                );
+               request,
+               (result) =>
+               {
+                   OnCreatedLobby(result);
+                   onLobbyCreated?.Invoke(result);
+               },
+               (error) =>
+               {
+                   PlayFabLogging.LogError("Couldn't create lobby", error);
+                   onLobbyCreated?.Invoke(null);
+               }
+               );
         }
 
         private void OnCreatedLobby(CreateLobbyResult result)
         {
             PlayFabLogging.Log($"Created lobby : ID = {result.LobbyId}");
-            onLobbyCreated?.Invoke(result);
             currentLobbyID = result.LobbyId;
         }
 
-        public void JoinLobby(string connectionString)
+        public void JoinLobby(string connectionString, Action<JoinLobbyResult> onJoinLobby = null)
         {
             if (IsInALobby)
             {
                 PlayFabLogging.Log("Player already in a lobby");
+                onJoinLobby?.Invoke(null);
                 return;
             }
 
@@ -84,8 +90,16 @@ namespace PlayFabIntegration
 
             PlayFabMultiplayerAPI.JoinLobby(
                 request,
-                OnJoinedLobby,
-                (error) => PlayFabLogging.LogError("Couldn't join lobby", error)
+                (result) =>
+                {
+                    OnJoinedLobby(result);
+                    onJoinLobby?.Invoke(result);
+                },
+                (error) =>
+                {
+                    PlayFabLogging.LogError("Couldn't join lobby", error);
+                    onJoinLobby?.Invoke(null);
+                }
                 );
         }
 
@@ -96,17 +110,17 @@ namespace PlayFabIntegration
             onJoinedLobby?.Invoke(result);
         }
 
-        public void LeaveCurrentLobby()
+        public void LeaveCurrentLobby(Action<bool> onleftLobby = null)
         {
             if (!IsInALobby)
             {
                 PlayFabLogging.Log("Currently not in a lobby");
                 return;
             }
-            LeaveLobby(currentLobbyID);
+            LeaveLobby(currentLobbyID, onleftLobby);
         }
 
-        public void LeaveLobby(string lobbyID)
+        public void LeaveLobby(string lobbyID, Action<bool> onLeftLobby = null)
         {
             PlayFabLogging.Log("Attempt to leave current lobby");
 
@@ -118,8 +132,16 @@ namespace PlayFabIntegration
 
             PlayFabMultiplayerAPI.LeaveLobby(
                 request,
-                OnLeftLobby,
-                (error) => PlayFabLogging.LogError("Couldn't leave lobby", error)
+                (result) =>
+                {
+                    OnLeftLobby(result);
+                    onLeftLobby?.Invoke(true);
+                },
+                (error) =>
+                {
+                    PlayFabLogging.LogError("Couldn't leave lobby", error);
+                    onLeftLobby?.Invoke(false);
+                }
                 );
         }
 
@@ -152,19 +174,28 @@ namespace PlayFabIntegration
             }
         }
 
-        public void JoinArrangedLobby(string arrangementString)
+        public void JoinArrangedLobby(string arrangementString, Action<JoinLobbyResult> onJoin = null)
         {
             PlayFabLogging.Log($"Trying to join arranged lobby with code : {arrangementString}");
 
             var request = new JoinArrangedLobbyRequest
             {
-                ArrangementString = arrangementString
+                ArrangementString = arrangementString,
+                MemberEntity = GetMultiplayerEntityKey(),
             };
 
             PlayFabMultiplayerAPI.JoinArrangedLobby(
                 request,
-                OnJoinArrangedLobby,
-                (error) => PlayFabLogging.LogError("Couldn't join lobby", error)
+                (result) =>
+                {
+                    OnJoinArrangedLobby(result);
+                    onJoin?.Invoke(result);
+                },
+                (error) =>
+                {
+                    PlayFabLogging.LogError("Couldn't join lobby", error);
+                    onJoin?.Invoke(null);
+                }
                 );
         }
 
@@ -218,10 +249,9 @@ namespace PlayFabIntegration
             PlayFabLogging.Log("Set as lobby owner");
         }
 
-        public void GetLobby(string lobbyID, Action<GetLobbyResult> onGotLobby)
+        public void GetLobby(string lobbyID, Action<GetLobbyResult> onGotLobby = null)
         {
             PlayFabLogging.Log("Attempt to get lobby");
-            onGetLobby = onGotLobby;
 
             var request = new GetLobbyRequest
             {
@@ -230,15 +260,22 @@ namespace PlayFabIntegration
 
             PlayFabMultiplayerAPI.GetLobby(
                 request,
-                OnGetLobby,
-                (error) => PlayFabLogging.LogError("Couldn't get lobby", error)
+                (result) =>
+                {
+                    OnGetLobby(result);
+                    onGotLobby?.Invoke(result);
+                },
+                (error) =>
+                {
+                    PlayFabLogging.LogError("Couldn't get lobby", error);
+                    onGotLobby?.Invoke(null);
+                }
                 );
         }
 
         private void OnGetLobby(GetLobbyResult result)
         {
             PlayFabLogging.Log($"Found lobby");
-            onGetLobby?.Invoke(result);
         }
 
         #region DELETE LOBBIES

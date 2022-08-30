@@ -8,26 +8,32 @@ public class GameManager : NetworkBehaviour
     [SyncVar(hook = nameof(UpdateColor))] public Color cubeColor = Color.black;
     public MeshRenderer cubeMesh;
     public GameObject ballPrefab;
+    private GameObject newBall;
+    CharInputs inputs;
 
-    private void Update()
+    private void Start()
     {
-        if (isServer)
-        {
-            if (Input.GetKeyDown(KeyCode.Backspace))
-            {
-                for (int i = 0; i < 5; i++)
-                {
-                    cubeColor = Random.ColorHSV();
-                }
-            }
-            if (Input.GetKeyDown(KeyCode.Space))
-            {
-                SpawnBall();
-            }
-        }
+        if (!isServer) return;
+        inputs = new CharInputs();
+        inputs.Enable();
+        inputs.Server.ChangeColor.performed += ChangeColor_performed;
+        inputs.Server.SpawnBall.performed += SpawnBall_performed;
     }
 
-    private GameObject newBall;
+    private void SpawnBall_performed(UnityEngine.InputSystem.InputAction.CallbackContext obj)
+    {
+        SpawnBall();
+    }
+
+    private void ChangeColor_performed(UnityEngine.InputSystem.InputAction.CallbackContext obj)
+    {
+        for (int i = 0; i < 5; i++)
+        {
+            cubeColor = Random.ColorHSV();
+        }
+        UpdateColor(cubeColor, cubeColor);
+    }
+
 
     private void SpawnBall()
     {

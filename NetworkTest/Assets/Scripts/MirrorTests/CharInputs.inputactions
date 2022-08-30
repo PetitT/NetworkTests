@@ -103,6 +103,54 @@
                     "isPartOfComposite": false
                 }
             ]
+        },
+        {
+            "name": "Server",
+            "id": "354e439b-b37b-4ac4-b065-fe61e022f083",
+            "actions": [
+                {
+                    "name": "SpawnBall",
+                    "type": "Button",
+                    "id": "9a2bfdb1-90ca-4437-8828-94bc8ab483e9",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "ChangeColor",
+                    "type": "Button",
+                    "id": "99f054e5-bb07-4fca-845c-1dcff38513fd",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "7211ed8b-333b-4885-a59b-d93e13b254ec",
+                    "path": "<Keyboard>/space",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "SpawnBall",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "8e0b7d34-694c-467d-a78a-7b2664a3713e",
+                    "path": "<Keyboard>/backspace",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ChangeColor",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
         }
     ],
     "controlSchemes": []

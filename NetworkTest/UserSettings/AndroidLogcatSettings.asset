@@ -3,7 +3,7 @@
     "m_SelectedPackage": {
         "deviceId": "1WMHH841Z10482",
         "name": "com.LowTeeGames.Networktest",
-        "processId": 21572,
+        "processId": 23281,
         "exited": false
     },
     "m_SelectedPriority": 0,
@@ -11,43 +11,103 @@
         {
             "deviceId": "1WMHH841Z10482",
             "name": "com.LowTeeGames.Networktest",
-            "processId": 12580,
+            "processId": 15968,
+            "exited": true
+        },
+        {
+            "deviceId": "1WMHH841Z10482",
+            "name": "com.LowTeeGames.Networktest",
+            "processId": 17571,
+            "exited": true
+        },
+        {
+            "deviceId": "1WMHH841Z10482",
+            "name": "com.LowTeeGames.Networktest",
+            "processId": 18159,
             "exited": true
         },
         {
             "deviceId": "1WMHH841Z10482",
             "name": "com.oculus.shellenv",
-            "processId": 2076,
+            "processId": 2180,
             "exited": false
         },
         {
             "deviceId": "1WMHH841Z10482",
             "name": "com.LowTeeGames.Networktest",
-            "processId": 13767,
+            "processId": 21316,
             "exited": true
         },
         {
             "deviceId": "1WMHH841Z10482",
             "name": "com.LowTeeGames.Networktest",
-            "processId": 14194,
-            "exited": true
-        },
-        {
-            "deviceId": "1WMHH841Z10482",
-            "name": "com.LowTeeGames.Networktest",
-            "processId": 15412,
-            "exited": true
-        },
-        {
-            "deviceId": "1WMHH841Z10482",
-            "name": "com.LowTeeGames.Networktest",
-            "processId": 21155,
+            "processId": 23281,
             "exited": false
         },
         {
-            "deviceId": "1WMHH841Z10482",
+            "deviceId": "1WMHHB672W2103",
             "name": "com.LowTeeGames.Networktest",
-            "processId": 21572,
+            "processId": 8907,
+            "exited": true
+        },
+        {
+            "deviceId": "1WMHHB672W2103",
+            "name": "com.LowTeeGames.Networktest",
+            "processId": 10067,
+            "exited": true
+        },
+        {
+            "deviceId": "1WMHHB672W2103",
+            "name": "com.LowTeeGames.Networktest",
+            "processId": 11475,
+            "exited": true
+        },
+        {
+            "deviceId": "1WMHHB672W2103",
+            "name": "com.LowTeeGames.Networktest",
+            "processId": 12777,
+            "exited": true
+        },
+        {
+            "deviceId": "1WMHHB672W2103",
+            "name": "com.oculus.shellenv",
+            "processId": 2037,
+            "exited": false
+        },
+        {
+            "deviceId": "1WMHHB672W2103",
+            "name": "com.LowTeeGames.Networktest",
+            "processId": 14694,
+            "exited": false
+        },
+        {
+            "deviceId": "1WMHH84CTF1272",
+            "name": "com.oculus.os.clearactivity",
+            "processId": 5783,
+            "exited": false
+        },
+        {
+            "deviceId": "1WMHH84CTF1272",
+            "name": "com.LowTeeGames.Networktest",
+            "processId": 5116,
+            "exited": false
+        },
+        {
+            "deviceId": "1WMHH835Z11042",
+            "name": "com.LowTeeGames.Networktest",
+            "processId": 17645,
+            "exited": true
+        },
+        {
+            "deviceId": "1WMHH835Z11042",
+            "name": "com.oculus.shellenv",
+            "processId": 2117,
+            "exited": false
+        },
+        {
+            "deviceId": "1WMHH835Z11042",
+            "name": "com.LowTeeGames.Networktest",
+            "processId": 19571,
             "exited": false
         }
     ],

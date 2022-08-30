@@ -125,6 +125,54 @@ public partial class @CharInputs : IInputActionCollection2, IDisposable
                     ""isPartOfComposite"": false
                 }
             ]
+        },
+        {
+            ""name"": ""Server"",
+            ""id"": ""354e439b-b37b-4ac4-b065-fe61e022f083"",
+            ""actions"": [
+                {
+                    ""name"": ""SpawnBall"",
+                    ""type"": ""Button"",
+                    ""id"": ""9a2bfdb1-90ca-4437-8828-94bc8ab483e9"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ChangeColor"",
+                    ""type"": ""Button"",
+                    ""id"": ""99f054e5-bb07-4fca-845c-1dcff38513fd"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": """",
+                    ""id"": ""7211ed8b-333b-4885-a59b-d93e13b254ec"",
+                    ""path"": ""<Keyboard>/space"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""SpawnBall"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""8e0b7d34-694c-467d-a78a-7b2664a3713e"",
+                    ""path"": ""<Keyboard>/backspace"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ChangeColor"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                }
+            ]
         }
     ],
     ""controlSchemes"": []
@@ -133,6 +181,10 @@ public partial class @CharInputs : IInputActionCollection2, IDisposable
         m_Character = asset.FindActionMap("Character", throwIfNotFound: true);
         m_Character_Movement = m_Character.FindAction("Movement", throwIfNotFound: true);
         m_Character_SpawnBall = m_Character.FindAction("SpawnBall", throwIfNotFound: true);
+        // Server
+        m_Server = asset.FindActionMap("Server", throwIfNotFound: true);
+        m_Server_SpawnBall = m_Server.FindAction("SpawnBall", throwIfNotFound: true);
+        m_Server_ChangeColor = m_Server.FindAction("ChangeColor", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -229,9 +281,55 @@ public partial class @CharInputs : IInputActionCollection2, IDisposable
         }
     }
     public CharacterActions @Character => new CharacterActions(this);
+
+    // Server
+    private readonly InputActionMap m_Server;
+    private IServerActions m_ServerActionsCallbackInterface;
+    private readonly InputAction m_Server_SpawnBall;
+    private readonly InputAction m_Server_ChangeColor;
+    public struct ServerActions
+    {
+        private @CharInputs m_Wrapper;
+        public ServerActions(@CharInputs wrapper) { m_Wrapper = wrapper; }
+        public InputAction @SpawnBall => m_Wrapper.m_Server_SpawnBall;
+        public InputAction @ChangeColor => m_Wrapper.m_Server_ChangeColor;
+        public InputActionMap Get() { return m_Wrapper.m_Server; }
+        public void Enable() { Get().Enable(); }
+        public void Disable() { Get().Disable(); }
+        public bool enabled => Get().enabled;
+        public static implicit operator InputActionMap(ServerActions set) { return set.Get(); }
+        public void SetCallbacks(IServerActions instance)
+        {
+            if (m_Wrapper.m_ServerActionsCallbackInterface != null)
+            {
+                @SpawnBall.started -= m_Wrapper.m_ServerActionsCallbackInterface.OnSpawnBall;
+                @SpawnBall.performed -= m_Wrapper.m_ServerActionsCallbackInterface.OnSpawnBall;
+                @SpawnBall.canceled -= m_Wrapper.m_ServerActionsCallbackInterface.OnSpawnBall;
+                @ChangeColor.started -= m_Wrapper.m_ServerActionsCallbackInterface.OnChangeColor;
+                @ChangeColor.performed -= m_Wrapper.m_ServerActionsCallbackInterface.OnChangeColor;
+                @ChangeColor.canceled -= m_Wrapper.m_ServerActionsCallbackInterface.OnChangeColor;
+            }
+            m_Wrapper.m_ServerActionsCallbackInterface = instance;
+            if (instance != null)
+            {
+                @SpawnBall.started += instance.OnSpawnBall;
+                @SpawnBall.performed += instance.OnSpawnBall;
+                @SpawnBall.canceled += instance.OnSpawnBall;
+                @ChangeColor.started += instance.OnChangeColor;
+                @ChangeColor.performed += instance.OnChangeColor;
+                @ChangeColor.canceled += instance.OnChangeColor;
+            }
+        }
+    }
+    public ServerActions @Server => new ServerActions(this);
     public interface ICharacterActions
     {
         void OnMovement(InputAction.CallbackContext context);
         void OnSpawnBall(InputAction.CallbackContext context);
+    }
+    public interface IServerActions
+    {
+        void OnSpawnBall(InputAction.CallbackContext context);
+        void OnChangeColor(InputAction.CallbackContext context);
     }
 }

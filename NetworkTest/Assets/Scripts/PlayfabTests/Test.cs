@@ -33,7 +33,6 @@ public class Test : MonoBehaviour
     {
         playFabManager = GetComponent<PlayFabManager>();
         playFabManager.LobbyManager.onJoinedLobby += LobbyManager_onJoinedLobby;
-        playFabManager.LobbyManager.onLobbyCreated += LobbyManager_onLobbyCreated;
     }
 
     private void Start()
@@ -229,7 +228,7 @@ public class Test : MonoBehaviour
 
     public void CreateLobby()
     {
-        playFabManager.LobbyManager.CreateLobby();
+        playFabManager.LobbyManager.CreateLobby(LobbyManager_onLobbyCreated);
     }
 
     private void LobbyManager_onLobbyCreated(CreateLobbyResult obj)
