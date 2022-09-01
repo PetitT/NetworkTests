@@ -16,10 +16,7 @@ namespace PlayFabIntegration
         private string currentLobbyID;
         private PlayFab.MultiplayerModels.EntityKey entityKey;
 
-        /// <summary>
-        /// This is a workaround to convert the entity key from two different namespaces
-        /// </summary>
-        /// <returns></returns>
+        // This is a workaround to convert the entity key from two different namespaces
         private PlayFab.MultiplayerModels.EntityKey GetMultiplayerEntityKey()
         {
             if (entityKey == null)
@@ -69,6 +66,7 @@ namespace PlayFabIntegration
         {
             PlayFabLogging.Log($"Created lobby : ID = {result.LobbyId}");
             currentLobbyID = result.LobbyId;
+            GetLobby(currentLobbyID);
         }
 
         public void JoinLobby(string connectionString, Action<JoinLobbyResult> onJoinLobby = null)
@@ -106,7 +104,7 @@ namespace PlayFabIntegration
         private void OnJoinedLobby(JoinLobbyResult result)
         {
             PlayFabLogging.Log($"Joined Lobby : ID is {result.LobbyId}");
-            currentLobbyID = result.LobbyId;
+            currentLobbyID = result.LobbyId;            
             onJoinedLobby?.Invoke(result);
         }
 
@@ -217,14 +215,32 @@ namespace PlayFabIntegration
 
             PlayFabMultiplayerAPI.UpdateLobby(
                 request,
-                OnSetLobbyName,
+                OnSetLobbyData,
                 (error) => PlayFabLogging.LogError("Couldn't set Lobby Name", error)
                 );
         }
 
-        private void OnSetLobbyName(LobbyEmptyResult result)
+        public void SetLobbyData(string lobbyID, Dictionary<string, string> data)
         {
-            PlayFabLogging.Log($"Set lobby name");
+            PlayFabLogging.Log("Attempt to set lobby data");
+
+            var request = new UpdateLobbyRequest
+            {
+                MemberEntity = GetMultiplayerEntityKey(),
+                LobbyData = data,
+                LobbyId = lobbyID
+            };
+
+            PlayFabMultiplayerAPI.UpdateLobby(
+               request,
+               OnSetLobbyData,
+               (error) => PlayFabLogging.LogError("Couldn't set Lobby Name", error)
+               );
+        }
+
+        private void OnSetLobbyData(LobbyEmptyResult result)
+        {
+            PlayFabLogging.Log($"Set lobby data");
         }
 
         public void SetAsLobbyOwner(string lobbyID)
@@ -274,7 +290,7 @@ namespace PlayFabIntegration
         }
 
         private void OnGetLobby(GetLobbyResult result)
-        {
+        {            
             PlayFabLogging.Log($"Found lobby");
         }
 
