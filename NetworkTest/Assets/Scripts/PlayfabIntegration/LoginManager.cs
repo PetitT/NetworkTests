@@ -13,7 +13,7 @@ namespace PlayFabIntegration
     public class LoginManager
     {
         public event Action<LoginResult> onSuccessfulLogIn;
-        public event Action onFailedToLogIn;
+
         public event Action<string> onUpdatedDisplayName;
 
         public bool IsLoggedIn { get; private set; }
@@ -29,11 +29,12 @@ namespace PlayFabIntegration
         /// Logs the player to an account. 
         /// </summary>
         /// <param name="method">Logging with Device ID means there is one account per device. Logging with random ID serves as testing tool</param>
-        public void LogInWithID(LoginMethod method = LoginMethod.DeviceID)
+        public void LogInWithID(LoginMethod method = LoginMethod.DeviceID, Action<LoginResult> onLoggedIn = null)
         {
             if (IsLoggedIn)
             {
                 PlayFabLogging.Log("Already logged in");
+                onLoggedIn?.Invoke(null);
                 return;
             }
 
@@ -57,22 +58,30 @@ namespace PlayFabIntegration
                 CustomId = ID,
                 CreateAccount = true,
                 InfoRequestParameters = new GetPlayerCombinedInfoRequestParams
-                {
-                    GetPlayerProfile = true                    
+                {                    
+                    GetPlayerProfile = true
                 }
             };
 
             PlayFabClientAPI.LoginWithCustomID(
                 request,
-                OnLoggedIn,
-                OnError
+                (result) =>
+                {
+                    OnLoggedIn(result);
+                    onLoggedIn?.Invoke(result);
+                },
+                (error) =>
+                {
+                    PlayFabLogging.LogError("Failed to login", error);
+                    onLoggedIn?.Invoke(null);
+                }
                 );
         }
 
         private void OnLoggedIn(LoginResult result)
         {
             PlayFabLogging.Log("Successful login!");
-            EntityKey = result.EntityToken.Entity;            
+            EntityKey = result.EntityToken.Entity;
             IsLoggedIn = true;
             LoggedInPlayFabID = result.PlayFabId;
             SessionTicket = result.SessionTicket;
@@ -88,12 +97,6 @@ namespace PlayFabIntegration
             }
 
             onSuccessfulLogIn?.Invoke(result);
-        }
-
-        private void OnError(PlayFabError error)
-        {
-            PlayFabLogging.LogError("Failed to login" , error);
-            onFailedToLogIn?.Invoke();
         }
 
         #endregion
