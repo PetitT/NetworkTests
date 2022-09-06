@@ -171,6 +171,8 @@ public class OculusPresence : MonoBehaviour
                 {
                     roomText.text = "No Room...";
                     lobbyID = "";
+                    DisplayLobbyInfo(null);
+                    ClearPresence();
                 }
             }
             );
@@ -195,7 +197,13 @@ public class OculusPresence : MonoBehaviour
 
     private void DisplayLobbyInfo(Lobby lobby)
     {
-        if (lobby == null) return;
+        if (lobby == null)
+        {
+            ownerText.text = "Owner";
+            playerTexts.ForEach(t => t.text = "...");
+            idText.text = "ID...";
+            return;
+        }
 
         Debug.Log($"Lobby ID : {lobby.LobbyId}, info : {lobby.Members.Count} users, owner is {lobby.Owner.Id}");
 
