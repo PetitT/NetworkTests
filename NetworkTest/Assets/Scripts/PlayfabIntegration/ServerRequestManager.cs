@@ -30,7 +30,8 @@ namespace PlayFabIntegration
             {
                 BuildId = networkManager.Config.buildId,
                 SessionId = System.Guid.NewGuid().ToString(),
-                PreferredRegions = networkManager.Config.preferredRegions
+                PreferredRegions = networkManager.Config.preferredRegions,
+                //SessionCookie could be used to send parameters to players
             };
 
             PlayFabMultiplayerAPI.RequestMultiplayerServer(

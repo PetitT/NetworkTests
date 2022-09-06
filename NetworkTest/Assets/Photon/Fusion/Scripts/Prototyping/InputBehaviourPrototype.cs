@@ -13,7 +13,7 @@ public class InputBehaviourPrototype : Fusion.Behaviour, INetworkRunnerCallbacks
   public void OnInput(NetworkRunner runner, NetworkInput input) {
     var frameworkInput = new NetworkInputPrototype();
 
-    if (Input.GetKey(KeyCode.W)) {
+    if (Input.GetKey(KeyCode.Z)) {
       frameworkInput.Buttons.Set(NetworkInputPrototype.BUTTON_FORWARD, true);
     }
 
@@ -21,7 +21,7 @@ public class InputBehaviourPrototype : Fusion.Behaviour, INetworkRunnerCallbacks
       frameworkInput.Buttons.Set(NetworkInputPrototype.BUTTON_BACKWARD, true);
     }
 
-    if (Input.GetKey(KeyCode.A)) {
+    if (Input.GetKey(KeyCode.Q)) {
       frameworkInput.Buttons.Set(NetworkInputPrototype.BUTTON_LEFT, true);
     }
 

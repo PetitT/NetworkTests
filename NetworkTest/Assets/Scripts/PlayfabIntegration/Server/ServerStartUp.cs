@@ -63,7 +63,7 @@ public class ServerStartUp : MonoBehaviour
         PlayFabMultiplayerAgentAPI.OnShutDownCallback += OnShutdown;
         PlayFabMultiplayerAgentAPI.OnServerActiveCallback += OnServerActive;
         PlayFabMultiplayerAgentAPI.OnAgentErrorCallback += OnAgentError;
-
+       // PlayFabMultiplayerAgentAPI.SessionConfig Could be used to retrive data set when requesting the server
         Room.OnPlayerAdded += OnPlayerAdded;
         Room.OnPlayerRemoved += OnPlayerRemoved;
 

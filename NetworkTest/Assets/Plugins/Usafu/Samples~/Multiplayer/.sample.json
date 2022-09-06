@@ -1,0 +1,5 @@
+{
+	"displayName":"Multiplayer",
+	"description": "Test and example package for multiplayer usage of USAFU.",
+	"createSeparatePackage": false
+}
