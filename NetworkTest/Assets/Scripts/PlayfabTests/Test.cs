@@ -66,7 +66,7 @@ public class Test : MonoBehaviour
             return;
         }
 
-        playFabManager.LoginManager.LogInWithID(method);
+        playFabManager.LoginManager.LogIn(method);
     }
 
     public void GetTitleDatas()

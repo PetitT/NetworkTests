@@ -12,7 +12,7 @@ namespace PlayFabIntegration
     {
         private static PlayFabManager instance;
         public static PlayFabManager Instance => instance ??= FindObjectOfType<PlayFabManager>();
-
+        public Configuration Config;
         public bool IsLoggedIn => LoginManager.IsLoggedIn;
         public string DisplayName => LoginManager.DisplayName;
         public string PlayfabID => LoginManager.LoggedInPlayFabID;

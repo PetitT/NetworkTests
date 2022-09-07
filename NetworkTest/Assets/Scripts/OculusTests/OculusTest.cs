@@ -15,7 +15,7 @@ public class OculusTest : MonoBehaviour
     private void Start()
     {
         OculusManager.Instance.StartupManager.AsyncInitializeCore(OnCoreInitialized);
-        PlayFabManager.Instance.LoginManager.LogInWithID(onLoggedIn: OnPlayfabLogin);
+        PlayFabManager.Instance.LoginManager.LogIn(onLoggedIn: OnPlayfabLogin);
     }
 
     private void OnCoreInitialized(Message<PlatformInitialize> message)

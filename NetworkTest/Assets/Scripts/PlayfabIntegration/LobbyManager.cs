@@ -13,12 +13,18 @@ namespace PlayFabIntegration
         public event Action<JoinLobbyResult> onJoinedLobby;
         public bool IsInALobby => !string.IsNullOrEmpty(currentLobbyID);
 
-        private string currentLobbyID;
+        public string currentLobbyID { get; private set; }
         private PlayFab.MultiplayerModels.EntityKey entityKey;
 
         // This is a workaround to convert the entity key from two different namespaces
         private PlayFab.MultiplayerModels.EntityKey GetMultiplayerEntityKey()
         {
+            if (!PlayFabManager.Instance.IsLoggedIn)
+            {
+                PlayFabLogging.Log("Must be connected to Playfab to call this method...");
+                return null;
+            }
+
             if (entityKey == null)
             {
                 PlayFab.ClientModels.EntityKey clientkey = PlayFabManager.Instance.EntityKey;
@@ -220,6 +226,15 @@ namespace PlayFabIntegration
                 );
         }
 
+        public void SetCurrentLobbyData(Dictionary<string,string> data)
+        {
+            if (string.IsNullOrEmpty(currentLobbyID))
+            {
+                Debug.Log("Not in a lobby...");
+            }
+            SetLobbyData(currentLobbyID, data);
+        }
+
         public void SetLobbyData(string lobbyID, Dictionary<string, string> data)
         {
             PlayFabLogging.Log("Attempt to set lobby data");
@@ -263,6 +278,15 @@ namespace PlayFabIntegration
         private void OnSetAsLobbyOwner(LobbyEmptyResult result)
         {
             PlayFabLogging.Log("Set as lobby owner");
+        }
+
+        public void GetCurrentLobby(Action<GetLobbyResult> onGotLobby = null)
+        {
+            if (string.IsNullOrEmpty(currentLobbyID))
+            {
+                PlayFabLogging.Log("Not in a lobby...");
+            }
+            GetLobby(currentLobbyID, onGotLobby);
         }
 
         public void GetLobby(string lobbyID, Action<GetLobbyResult> onGotLobby = null)

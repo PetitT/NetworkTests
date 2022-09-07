@@ -29,7 +29,7 @@ namespace PlayFabIntegration
         /// Logs the player to an account. 
         /// </summary>
         /// <param name="method">Logging with Device ID means there is one account per device. Logging with random ID serves as testing tool</param>
-        public void LogInWithID(LoginMethod method = LoginMethod.DeviceID, Action<LoginResult> onLoggedIn = null)
+        public void LogIn(LoginMethod method = LoginMethod.DeviceID, Action<LoginResult> onLoggedIn = null)
         {
             if (IsLoggedIn)
             {

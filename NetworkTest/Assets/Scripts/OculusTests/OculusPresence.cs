@@ -24,7 +24,7 @@ public class OculusPresence : MonoBehaviour
     void Start()
     {
         Core.AsyncInitialize().OnComplete(OnOculusCoreInitialized);
-        PlayFabManager.Instance.LoginManager.LogInWithID();
+        PlayFabManager.Instance.LoginManager.LogIn();
         PlayFabManager.Instance.LoginManager.onSuccessfulLogIn += LoginManager_onSuccessfulLogIn;
     }
 

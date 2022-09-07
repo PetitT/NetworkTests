@@ -24,7 +24,7 @@ public class OculusFriends : MonoBehaviour
     void Start()
     {
         Core.AsyncInitialize().OnComplete(OnInitialize); //This must be called before doing anything
-        PlayFabManager.Instance.LoginManager.LogInWithID();
+        PlayFabManager.Instance.LoginManager.LogIn();
         PlayFabManager.Instance.LoginManager.onSuccessfulLogIn += LoginManager_onSuccessfulLogIn;
     }
 
