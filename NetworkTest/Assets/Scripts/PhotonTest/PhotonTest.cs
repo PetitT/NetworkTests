@@ -5,19 +5,22 @@ using PlayFabIntegration;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PhotonTest : MonoBehaviour
 {
     string joinString;
     string sessionName;
-    ushort port = 7777;
+    ushort port = 27015;
 
     float timeToPoll;
+    bool connecting = false;
 
     private void Update()
     {
-        if (PlayFabManager.Instance.LobbyManager.IsInALobby)
+        if (PlayFabManager.Instance.LobbyManager.IsInALobby && !connecting)
         {
             timeToPoll -= Time.deltaTime;
             if (timeToPoll < 0)
@@ -42,7 +45,8 @@ public class PhotonTest : MonoBehaviour
             GameMode = GameMode.Server,
             SessionName = sessionName,
             Initialized = OnInitialize,
-            SceneManager = runner.GetComponent<INetworkSceneManager>()
+            SceneManager = runner.GetComponent<INetworkSceneManager>(),
+            Scene = SceneManager.GetActiveScene().buildIndex
         });
     }
 
@@ -51,16 +55,28 @@ public class PhotonTest : MonoBehaviour
         Debug.Log("Initialized");
     }
 
-    private void StartAsClient()
+    private async void AwaitClientStart()
+    {
+        var result = await StartAsClient();
+        if (result.Ok)
+        {
+            Debug.Log("Started as client");
+        }
+        else
+        {
+            Debug.Log($"Couldn't start client : {result.ShutdownReason}");
+        }
+    }
+
+    private Task<StartGameResult> StartAsClient()
     {
         NetworkRunner runner = FindObjectOfType<NetworkRunner>();
-        runner.StartGame(new StartGameArgs
+        return runner.StartGame(new StartGameArgs
         {
-            Address = NetAddress.Any(),
             GameMode = GameMode.Client,
             SessionName = sessionName,
-            Initialized = OnInitialize,
-            SceneManager = runner.GetComponent<INetworkSceneManager>()
+            SceneManager = runner.GetComponent<INetworkSceneManager>(),
+            Scene = SceneManager.GetActiveScene().buildIndex
         });
     }
 
@@ -82,12 +98,13 @@ public class PhotonTest : MonoBehaviour
 
     private void OnPolledLobby(GetLobbyResult obj)
     {
-        if(obj.Lobby.LobbyData == null) { Debug.Log("No Lobby data"); return; }
+        if (obj.Lobby.LobbyData == null) { Debug.Log("No Lobby data"); return; }
         if (obj.Lobby.LobbyData.ContainsKey("conn"))
         {
             sessionName = obj.Lobby.LobbyData["conn"];
             Debug.Log($"Found connection string {sessionName}. Trying to connect");
-            StartAsClient();
+            connecting = true;
+            AwaitClientStart();
         }
     }
 
@@ -121,7 +138,7 @@ public class PhotonTest : MonoBehaviour
             {
                 PlayFabManager.Instance.LobbyManager.JoinLobby(joinString);
             }
-            if(GUI.Button(new Rect(0,90,100,50), "Request Server"))
+            if (GUI.Button(new Rect(0, 90, 100, 50), "Request Server"))
             {
                 RequestServer();
             }
@@ -132,7 +149,7 @@ public class PhotonTest : MonoBehaviour
             }
             if (GUI.Button(new Rect(100, 300, 100, 50), "Start Client"))
             {
-                StartAsClient();
+                AwaitClientStart();
             }
         }
     }

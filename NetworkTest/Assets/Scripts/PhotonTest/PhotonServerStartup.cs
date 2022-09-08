@@ -5,7 +5,10 @@ using PlayFab.MultiplayerAgent.Model;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PhotonServerStartup : MonoBehaviour
 {
@@ -13,15 +16,16 @@ public class PhotonServerStartup : MonoBehaviour
     [SerializeField] bool _debugging = true;
 
     private List<ConnectedPlayer> _connectedPlayers; //A list of players that is sent to keep playfab updated, don't use it for gameplay
-    private NetworkRunner runner;
+    public NetworkRunner runner;
 
     public Configuration Config;
     string sessionID;
 
     private void Start()
     {
-        if(Config.buildType == BuildType.REMOTE_SERVER)
+        if (Config.buildType == BuildType.REMOTE_SERVER)
         {
+            Debug.LogWarning("[SERVER STARTUP] BEGIN OF REMOTE SERVER");
             StartRemoteServer();
         }
     }
@@ -38,50 +42,77 @@ public class PhotonServerStartup : MonoBehaviour
     {
         _connectedPlayers = new List<ConnectedPlayer>();
         PlayFabMultiplayerAgentAPI.Start();
+        Debug.LogWarning($"[SERVER STARTUP] START PLAYFAB AGENT");
         PlayFabMultiplayerAgentAPI.IsDebugging = _debugging;
-        //PlayFabMultiplayerAgentAPI.OnMaintenanceCallback += OnShutdown;
+        PlayFabMultiplayerAgentAPI.OnMaintenanceCallback += OnMaintenance;
         PlayFabMultiplayerAgentAPI.OnShutDownCallback += OnShutdown;
         PlayFabMultiplayerAgentAPI.OnServerActiveCallback += OnServerActive;
         PlayFabMultiplayerAgentAPI.OnAgentErrorCallback += OnAgentError;
-        sessionID = PlayFabMultiplayerAgentAPI.SessionConfig.SessionId;
 
+        NetworkEvents networkEvents = FindObjectOfType<NetworkEvents>();
+        networkEvents.PlayerJoined.AddListener(OnPlayerJoined);
+        networkEvents.PlayerLeft.AddListener(OnPlayerLeft);
+
+
+        StartCoroutine(ReadyForPlayers());
         StartCoroutine(ShutdownServerInXTime(_serverShutdownTimer));
     }
 
     private void OnServerActive()
     {
-        StartServer();
-        Debug.Log("Server Started From Agent Activation");
+        Debug.LogWarning("[SERVER STARTUP] PLAYFAB SERVER STARTED FROM AGENT ACTIVATION");
+        AwaitForServerStart();
     }
 
-    public void StartServer()
+    private async void AwaitForServerStart()
     {
-        runner.StartGame(new StartGameArgs
+        var result = await StartServer();
+        if (result.Ok)
         {
-            Address = NetAddress.Any(7777),
-            GameMode = GameMode.Server,
-            SessionName = sessionID,
-            SceneManager = runner.GetComponent<INetworkSceneManager>(),
-            Initialized = OnInitialize,
-        });
-    }
+            Debug.LogWarning("[SERVER STARTUP] PHOTON SERVER SUCCESFULLY STARTED");
+        }
+        else
+        {
+            Debug.LogWarning("[SERVER STARTUP] PHOTON SERVER SUCCESFULLY STARTED");
+        }
 
-    private void OnInitialize(NetworkRunner obj)
-    {
+        Debug.LogWarning("[SERVER STARTUP] SET REDY FOR PLAYERS");
         PlayFabMultiplayerAgentAPI.ReadyForPlayers();
     }
 
-    private void OnPlayerRemoved(string playfabId)
+    private Task<StartGameResult> StartServer()
     {
-        ConnectedPlayer player = _connectedPlayers.Find(x => x.PlayerId.Equals(playfabId, StringComparison.OrdinalIgnoreCase));
-        _connectedPlayers.Remove(player);
+        sessionID = PlayFabMultiplayerAgentAPI.SessionConfig.SessionId;
+        Debug.LogWarning($"[SERVER STARTUP] STARTING PHOTON SERVER, ID IS : {sessionID}");
+        if (runner == null) { runner = FindObjectOfType<NetworkRunner>(); }
+
+        return runner.StartGame(new StartGameArgs
+        {
+            Address = NetAddress.Any(27015),
+            GameMode = GameMode.Server,
+            SessionName = sessionID,
+            SceneManager = runner.GetComponent<INetworkSceneManager>(),
+            Scene = SceneManager.GetActiveScene().buildIndex,
+        });
+    }
+
+    private void OnPlayerJoined(NetworkRunner arg0, PlayerRef arg1)
+    {
+        ConnectedPlayer player = new ConnectedPlayer(arg1.PlayerId.ToString());
+        _connectedPlayers.Add(player);
         PlayFabMultiplayerAgentAPI.UpdateConnectedPlayers(_connectedPlayers);
     }
 
-    private void OnPlayerAdded(string playfabId)
+    private void OnPlayerLeft(NetworkRunner arg0, PlayerRef arg1)
     {
-        _connectedPlayers.Add(new ConnectedPlayer(playfabId));
+        ConnectedPlayer player = _connectedPlayers.FirstOrDefault(player => player.PlayerId == arg1.PlayerId.ToString());
+        _connectedPlayers.Remove(player);
         PlayFabMultiplayerAgentAPI.UpdateConnectedPlayers(_connectedPlayers);
+        if(_connectedPlayers.Count == 0)
+        {
+            Debug.LogWarning("[SERVER STARTUP] NO MORE PLAYERS, SHUTTING DOWN SERVER");
+            StartShutdownProcess();
+        }
     }
 
     private void OnAgentError(string error)
@@ -91,19 +122,33 @@ public class PhotonServerStartup : MonoBehaviour
 
     private void OnShutdown()
     {
+        Debug.LogWarning("[SERVER STARTUP] REQUEST SHUTDOWN");
+        StartShutdownProcess();
+    }
+
+    private void OnMaintenance(DateTime? NextScheduledMaintenanceUtc)
+    {
+        Debug.LogWarning("[SERVER STARTUP] REQUEST MAINTENANCE");
         StartShutdownProcess();
     }
 
     private void StartShutdownProcess()
     {
-        Debug.Log("Server is shutting down");
         StartCoroutine(Shutdown());
     }
 
     IEnumerator Shutdown()
     {
+        Debug.LogWarning("[SERVER STARTUP] SHUTTING DOWN");
         yield return new WaitForSeconds(5f);
         Application.Quit();
+    }
+
+    IEnumerator ReadyForPlayers()
+    {
+        yield return new WaitForSeconds(1);
+        PlayFabMultiplayerAgentAPI.ReadyForPlayers();
+        Debug.LogWarning("[SERVER STARTUP] SET READY FOR PLAYERS");
     }
 
     IEnumerator ShutdownServerInXTime(float time = 300f)

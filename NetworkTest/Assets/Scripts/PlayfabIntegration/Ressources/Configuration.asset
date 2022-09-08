@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2084fb1946aec9340a63c6f053f9b57a, type: 3}
   m_Name: Configuration
   m_EditorClassIdentifier: 
-  buildType: 2
-  buildId: '7fc1fcab-ae35-4b5a-a281-f4a6ad0a5e06 '
+  buildType: 0
+  buildId: 15288ff1-c78e-4b42-a4f8-015b82450059
   ipAddress: 
   port: 0
   playFabDebugging: 1

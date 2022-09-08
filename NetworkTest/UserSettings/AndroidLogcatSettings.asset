@@ -3,45 +3,39 @@
     "m_SelectedPackage": {
         "deviceId": "1WMHH841Z10482",
         "name": "com.LowTeeGames.Networktest",
-        "processId": 30616,
+        "processId": 5958,
         "exited": false
     },
     "m_SelectedPriority": 0,
     "m_KnownPackagesForSerialization": [
         {
             "deviceId": "1WMHH841Z10482",
-            "name": "com.oculus.shellenv",
-            "processId": 2069,
-            "exited": false
-        },
-        {
-            "deviceId": "1WMHH841Z10482",
-            "name": "com.LowTeeGames.Networktest",
-            "processId": 16896,
-            "exited": true
-        },
-        {
-            "deviceId": "1WMHH841Z10482",
-            "name": "com.LowTeeGames.Networktest",
-            "processId": 18797,
-            "exited": true
-        },
-        {
-            "deviceId": "1WMHH841Z10482",
-            "name": "com.LowTeeGames.Networktest",
-            "processId": 29501,
-            "exited": true
-        },
-        {
-            "deviceId": "1WMHH841Z10482",
-            "name": "com.LowTeeGames.Networktest",
-            "processId": 30281,
-            "exited": true
-        },
-        {
-            "deviceId": "1WMHH841Z10482",
             "name": "com.LowTeeGames.Networktest",
             "processId": 30616,
+            "exited": true
+        },
+        {
+            "deviceId": "1WMHH841Z10482",
+            "name": "com.LowTeeGames.Networktest",
+            "processId": 4337,
+            "exited": true
+        },
+        {
+            "deviceId": "1WMHH841Z10482",
+            "name": "com.oculus.shellenv",
+            "processId": 2260,
+            "exited": true
+        },
+        {
+            "deviceId": "1WMHH841Z10482",
+            "name": "com.LowTeeGames.Networktest",
+            "processId": 5422,
+            "exited": true
+        },
+        {
+            "deviceId": "1WMHH841Z10482",
+            "name": "com.LowTeeGames.Networktest",
+            "processId": 5958,
             "exited": false
         },
         {
