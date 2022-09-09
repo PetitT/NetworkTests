@@ -20,15 +20,15 @@ public class PhotonTest : MonoBehaviour
 
     private void Update()
     {
-        if (PlayFabManager.Instance.LobbyManager.IsInALobby && !connecting)
-        {
-            timeToPoll -= Time.deltaTime;
-            if (timeToPoll < 0)
-            {
-                PollCurrentLobby();
-                timeToPoll = 7;
-            }
-        }
+        //if (PlayFabManager.Instance.LobbyManager.IsInALobby && !connecting)
+        //{
+        //    timeToPoll -= Time.deltaTime;
+        //    if (timeToPoll < 0)
+        //    {
+        //        PollCurrentLobby();
+        //        timeToPoll = 7;
+        //    }
+        //}
     }
 
     private void OnLobbyCreated(CreateLobbyResult obj)
