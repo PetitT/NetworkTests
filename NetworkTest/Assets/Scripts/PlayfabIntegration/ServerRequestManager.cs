@@ -23,7 +23,7 @@ namespace PlayFabIntegration
             {
                 BuildId = PlayFabManager.Instance.Config.buildId,
                 SessionId = System.Guid.NewGuid().ToString(),
-                PreferredRegions = PlayFabManager.Instance.Config.preferredRegions,
+                PreferredRegions = PlayFabManager.Instance.Config.preferredRegions
             };
 
             PlayFabMultiplayerAPI.RequestMultiplayerServer(

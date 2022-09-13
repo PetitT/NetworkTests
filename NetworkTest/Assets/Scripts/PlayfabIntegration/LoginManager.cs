@@ -24,7 +24,6 @@ namespace PlayFabIntegration
         public EntityKey EntityKey { get; private set; }
         public enum LoginMethod { DeviceID, Random }
 
-        #region CLIENT LOGIN
         /// <summary>
         /// Logs the player to an account. 
         /// </summary>
@@ -99,9 +98,6 @@ namespace PlayFabIntegration
             onSuccessfulLogIn?.Invoke(result);
         }
 
-        #endregion
-
-        #region DISPLAY NAME
         public void UpdateDisplayName(string newName)
         {
             var request = new UpdateUserTitleDisplayNameRequest
@@ -122,6 +118,5 @@ namespace PlayFabIntegration
             DisplayName = result.DisplayName;
             onUpdatedDisplayName?.Invoke(DisplayName);
         }
-        #endregion
     }
 }

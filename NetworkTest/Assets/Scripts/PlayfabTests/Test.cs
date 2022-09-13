@@ -152,7 +152,7 @@ public class Test : MonoBehaviour
 
     public void SendDataToLeaderboard()
     {
-        playFabManager.LeaderboardManager.SendDataToLeaderboard(leaderboardName, score);
+        playFabManager.LeaderboardManager.SendScoreToLeaderboard(leaderboardName, score);
     }
 
     public void GetDataFromLeaderboard()
