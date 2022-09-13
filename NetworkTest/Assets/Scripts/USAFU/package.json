@@ -1,0 +1,8 @@
+{
+  "name": "com.fishingcactus.usafu",
+  "displayName": "USAFU",
+  "version": "1.4.1",
+  "unity": "2019.3",
+  "description": "Users, Saving, Achievements for Unity",
+  "type": "library"
+}
