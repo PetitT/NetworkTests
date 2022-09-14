@@ -1,34 +1,47 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 using PlayFab;
 using PlayFab.MultiplayerModels;
-using Mirror;
 using System;
 
-namespace PlayFabIntegration
+namespace FishingCactus.PlayFabIntegration
 {
     public class MatchmakingManager
     {
-        private PlayFabManager playFabManager => PlayFabManager.Instance;
+        //TYPES
+        [Flags]
+        public enum MatchmakingStatus
+        {
+            None = 0,
+            CreatingTicket = 1 << 0,
+            WaitingForPlayers = 1 << 1,
+            WaitingForMatch = 1 << 2,
+            WaitingForServer = 1 << 3,
+            Matched = 1 << 4,
+            Canceled = 1 << 5
+        }
+
+        //FIELDS
+        public event Action<GetMatchResult> onGetMatch;
 
         private string currentQueueName;
         private string ticketID;
-        private bool isPollingTicket = false;
         private float remainingTimeToPollTicket;
 
         private const float timeToPollTicket = 6f; //A matchmaking ticket can only be polled 10x/minutes
         private const string entityType = "title_player_account";
-
-        public string Status { get; private set; }
         public GetMatchResult MatchResult { get; private set; }
+        public MatchmakingStatus Status { get; private set; } = MatchmakingStatus.None;
 
-        public void Tick(float deltaTime)
-        {           
-            if (isPollingTicket)
+        //PROPERTIES
+        private bool isPollingTicket => (Status & (MatchmakingStatus.WaitingForPlayers | MatchmakingStatus.WaitingForMatch | MatchmakingStatus.WaitingForServer)) != 0;
+
+        //METHODS
+
+        public void Tick( float deltaTime )
+        {
+            if ( isPollingTicket )
             {
                 remainingTimeToPollTicket -= deltaTime;
-                if (remainingTimeToPollTicket <= 0)
+                if ( remainingTimeToPollTicket <= 0 )
                 {
                     PollTicket();
                     remainingTimeToPollTicket = timeToPollTicket;
@@ -36,30 +49,31 @@ namespace PlayFabIntegration
             }
         }
 
-
-        #region Matchmaking
         /// <summary>
         /// Attemps to put the client in a matchmaking queue
         /// </summary>
         /// <param name="queueName"></param>
         /// <param name="giveUpAfterSeconds">Delay after which the player automatically leaves the queue</param>
         /// <param name="customAttributes">Attributes should correspond to the Matchmaking rules in the Playfab console (e.g.: new { elo = targetElo }) </param>
-        public void StartMatchmaking(string queueName, int giveUpAfterSeconds = 30, object customAttributes = null)
+        public void StartMatchmaking(
+            string queueName, 
+            int giveUpAfterSeconds = 30, 
+            object customAttributes = null
+            )
         {
-            PlayFabLogging.Log("Attempt to start matchmaking");
-            Status = "Status : Creating ticket";
-
+            PlayFabLogging.Log( "Attempt to start matchmaking" );
+            Status = MatchmakingStatus.CreatingTicket;
             currentQueueName = queueName;
 
             var request = new CreateMatchmakingTicketRequest
             {
                 GiveUpAfterSeconds = giveUpAfterSeconds,
-                QueueName = currentQueueName,
+                QueueName = currentQueueName, 
                 Creator = new MatchmakingPlayer
                 {
                     Entity = new EntityKey
                     {
-                        Id = playFabManager.EntityID,
+                        Id = PlayFabManager.Instance.EntityKey.Id,
                         Type = entityType
                     },
                     Attributes = new MatchmakingPlayerAttributes
@@ -71,23 +85,22 @@ namespace PlayFabIntegration
 
             PlayFabMultiplayerAPI.CreateMatchmakingTicket(
                 request,
-                OnMatchmakingTicketCreated,
-                (error) => PlayFabLogging.LogError("Failed to create matchmaking ticket", error)
+                ( result ) => OnMatchmakingTicketCreated( result ),
+                ( error ) => PlayFabLogging.LogError( "Failed to create matchmaking ticket", error )
             );
         }
 
-        private void OnMatchmakingTicketCreated(CreateMatchmakingTicketResult result)
+        private void OnMatchmakingTicketCreated( CreateMatchmakingTicketResult result )
         {
-            PlayFabLogging.Log("Succesfully created matchmaking ticket");
-            Status = "Status: Ticket Created";
+            PlayFabLogging.Log( "Succesfully created matchmaking ticket" );
+            Status = MatchmakingStatus.WaitingForPlayers;
             ticketID = result.TicketId;
-            isPollingTicket = true;
-            remainingTimeToPollTicket = 0;
+            remainingTimeToPollTicket = timeToPollTicket;
         }
 
         private void PollTicket()
         {
-            PlayFabLogging.Log("Polling ticket...");
+            PlayFabLogging.Log( "Polling ticket..." );
 
             var request = new GetMatchmakingTicketRequest
             {
@@ -97,25 +110,37 @@ namespace PlayFabIntegration
 
             PlayFabMultiplayerAPI.GetMatchmakingTicket(
                 request,
-                OnGetMatchmakingTicket,
-                (error) => PlayFabLogging.LogError("Couldn't get matchmaking ticket", error)
+                ( result ) => OnGetMatchmakingTicket( result ),
+                ( error ) => PlayFabLogging.LogError( "Couldn't get matchmaking ticket", error )
                 );
 
             remainingTimeToPollTicket = timeToPollTicket;
         }
 
-        private void OnGetMatchmakingTicket(GetMatchmakingTicketResult result)
+        private void OnGetMatchmakingTicket( GetMatchmakingTicketResult result )
         {
-            Status = $"Status: {result.Status}";
-            switch (result.Status)
+            switch ( result.Status )
             {
+                case "WaitingForPlayers":
+                    Status = MatchmakingStatus.WaitingForPlayers;
+                    break;
+
+                case "WaitingForMatch":
+                    Status = MatchmakingStatus.WaitingForMatch;
+                    break;
+
+                case "WaitingForServer":
+                    Status = MatchmakingStatus.WaitingForServer;
+                    break;
+
                 case "Matched":
-                    isPollingTicket = false;
-                    StartMatch(result.MatchId);
+                    Status = MatchmakingStatus.Matched;
+                    StartMatch( result.MatchId );
                     break;
 
                 case "Canceled":
-                    Cancel();
+                    Status = MatchmakingStatus.Canceled;
+                    OnMatchmakingCanceled();
                     break;
 
                 default:
@@ -123,10 +148,8 @@ namespace PlayFabIntegration
             }
         }
 
-        private void StartMatch(string matchID)
+        private void StartMatch( string matchID )
         {
-            Status = $"Starting Match";
-
             var request = new GetMatchRequest
             {
                 MatchId = matchID,
@@ -135,33 +158,21 @@ namespace PlayFabIntegration
 
             PlayFabMultiplayerAPI.GetMatch(
                 request,
-                OnGetMatch,
-                (error) => PlayFabLogging.LogError("Couldn't start match", error)
+                ( result ) =>
+                {
+                    onGetMatch?.Invoke( result );
+                    MatchResult = result;
+                    PlayFabLogging.Log( "Found a match" );
+                },
+                ( error ) => PlayFabLogging.LogError( "Couldn't start match", error )
                 );
         }
 
-        private void OnGetMatch(GetMatchResult result)
-        {
-            Status = "Found match";
-            MatchResult = result;
-            PlayFabLogging.Log($"Server details : {result.ServerDetails.IPV4Address} - {result.ServerDetails.Ports[0].Num}");
-            //----TODO : CLEAN THIS --- 
-            CustomNetworkManager manager = NetworkManager.singleton as CustomNetworkManager;
-            manager.ConnectToServer(result.ServerDetails.IPV4Address, (ushort)result.ServerDetails.Ports[0].Num);
-        }
-
-        #endregion
-
-        #region Cancel Matchmaking
-
-        /// <summary>
-        /// Attemps to cancel the current matchmaking ticket
-        /// </summary>
         public void CancelMatchmaking()
         {
-            if (!isPollingTicket)
+            if ( !isPollingTicket )
             {
-                PlayFabLogging.Log("Can't cancel matchmaking - Not in a queue");
+                PlayFabLogging.Log( "Can't cancel matchmaking - Not in a queue" );
                 return;
             }
 
@@ -173,21 +184,16 @@ namespace PlayFabIntegration
 
             PlayFabMultiplayerAPI.CancelMatchmakingTicket(
                 request,
-                OnCanceledMatchmakingTicket,
-                (error) => PlayFabLogging.LogError("Couldn't cancel matchmaking ticket", error)
+                ( result ) => OnMatchmakingCanceled(),
+                ( error ) => PlayFabLogging.LogError( "Couldn't cancel matchmaking ticket", error )
                 );
-        }
-
-        private void OnCanceledMatchmakingTicket(CancelMatchmakingTicketResult result)
-        {
-            Cancel();
         }
 
         public void CancelAllMatchmakingQueuesForUser()
         {
-            if (!isPollingTicket)
+            if ( !isPollingTicket )
             {
-                PlayFabLogging.Log("Can't cancel matchmaking - Not in a queue");
+                PlayFabLogging.Log( "Can't cancel matchmaking - Not in a queue" );
                 return;
             }
 
@@ -198,24 +204,19 @@ namespace PlayFabIntegration
 
             PlayFabMultiplayerAPI.CancelAllMatchmakingTicketsForPlayer(
                 request,
-                OnCanceledAllMatchmaking,
-                (error) => PlayFabLogging.LogError("Couldn't cancel all matchmaking tickets", error)
+                ( result ) =>
+                {
+                    PlayFabLogging.Log( "All matcmaking tickets were canceled for this queue" );
+                    OnMatchmakingCanceled();
+                },
+                ( error ) => PlayFabLogging.LogError( "Couldn't cancel all matchmaking tickets", error )
                 );
         }
 
-        private void OnCanceledAllMatchmaking(CancelAllMatchmakingTicketsForPlayerResult result)
+        private void OnMatchmakingCanceled()
         {
-            PlayFabLogging.Log("All matcmaking tickets were canceled for this queue");
-            Cancel();
-        }
-
-        private void Cancel()
-        {
-            isPollingTicket = false;
-            Status = "Status: Canceled";
-            PlayFabLogging.Log("Matchmaking was canceled");
-        }
-
-        #endregion        
+            Status = MatchmakingStatus.Canceled;
+            PlayFabLogging.Log( "Matchmaking was canceled" );
+        } 
     }
 }

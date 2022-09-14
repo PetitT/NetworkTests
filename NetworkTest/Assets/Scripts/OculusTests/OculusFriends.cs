@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Oculus.Platform;
 using TMPro;
-using PlayFabIntegration;
+using FishingCactus.PlayFabIntegration;
 using PlayFab.MultiplayerModels;
 
 public class OculusFriends : MonoBehaviour
@@ -23,9 +23,8 @@ public class OculusFriends : MonoBehaviour
 
     void Start()
     {
-        Core.AsyncInitialize().OnComplete(OnInitialize); //This must be called before doing anything
-        PlayFabManager.Instance.LoginManager.LogIn();
-        PlayFabManager.Instance.LoginManager.onSuccessfulLogIn += LoginManager_onSuccessfulLogIn;
+        Core.AsyncInitialize().OnComplete(OnInitialize); //This must be called before doing anything from Oculus
+        PlayFabManager.Instance.LoginManager.LogIn(SystemInfo.deviceUniqueIdentifier, LoginManager_onSuccessfulLogIn);
     }
 
     private void LoginManager_onSuccessfulLogIn(PlayFab.ClientModels.LoginResult obj)

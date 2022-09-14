@@ -2,7 +2,7 @@
 using PlayFab;
 using PlayFab.ClientModels;
 using PlayFab.MultiplayerModels;
-using PlayFabIntegration;
+using FishingCactus.PlayFabIntegration;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;

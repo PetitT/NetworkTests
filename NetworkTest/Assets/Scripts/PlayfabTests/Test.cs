@@ -1,6 +1,6 @@
 using PlayFab.ClientModels;
 using PlayFab.MultiplayerModels;
-using PlayFabIntegration;
+using FishingCactus.PlayFabIntegration;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -8,7 +8,8 @@ using UnityEngine;
 
 public class Test : MonoBehaviour
 {
-    public PlayFabManager playFabManager;
+    private PlayFabManager playFabManager => PlayFabManager.Instance;
+
     [HideInInspector] public bool autoLoginOnStart;
     [HideInInspector] public string newDisplayName;
     [HideInInspector] public string specificTitleDataKey;
@@ -26,14 +27,7 @@ public class Test : MonoBehaviour
     [HideInInspector] public int testElo;
 
     [HideInInspector] public string lobbyArrangementString;
-    [HideInInspector] public string lobbyID;
     [HideInInspector] public string lobbyName;
-
-    private void Awake()
-    {
-        playFabManager = GetComponent<PlayFabManager>();
-        playFabManager.LobbyManager.onJoinedLobby += LobbyManager_onJoinedLobby;
-    }
 
     private void Start()
     {
@@ -42,23 +36,25 @@ public class Test : MonoBehaviour
             LoginWithDeviceID();
         }
     }
+
     public void LoginWithDeviceID()
     {
-        Login(LoginManager.LoginMethod.DeviceID);
+        Login(SystemInfo.deviceUniqueIdentifier);
     }
     public void CreateNewRandomAccount()
     {
-        Login(LoginManager.LoginMethod.Random);
-        playFabManager.LoginManager.onSuccessfulLogIn += LoginManager_onSuccessfulLogIn;
+        Login(UnityEngine.Random.Range(10000, 99999).ToString());
     }
 
     private void LoginManager_onSuccessfulLogIn(LoginResult result)
     {
-        playFabManager.LoginManager.UpdateDisplayName(UnityEngine.Random.Range(0, 1000).ToString());
-        playFabManager.LoginManager.onSuccessfulLogIn -= LoginManager_onSuccessfulLogIn;
+        if (string.IsNullOrEmpty(result.PlayFabId))
+        {
+            playFabManager.LoginManager.UpdateDisplayName(UnityEngine.Random.Range(0, 1000).ToString());
+        }
     }
 
-    private void Login(LoginManager.LoginMethod method)
+    private void Login(string ID)
     {
         if (playFabManager.IsLoggedIn)
         {
@@ -66,7 +62,7 @@ public class Test : MonoBehaviour
             return;
         }
 
-        playFabManager.LoginManager.LogIn(method);
+        playFabManager.LoginManager.LogIn(ID, (result) => LoginManager_onSuccessfulLogIn(result));
     }
 
     public void GetTitleDatas()
@@ -102,7 +98,7 @@ public class Test : MonoBehaviour
 
     public void GetAllPlayerDatas()
     {
-        playFabManager.PlayerDataManager.GetAllPlayerDatas(OnGetAllPlayerDatas);
+        playFabManager.PlayerDataManager.GetPlayerDatas(OnGetAllPlayerDatas);
     }
     private void OnGetAllPlayerDatas(Dictionary<string, string> result)
     {
@@ -120,10 +116,10 @@ public class Test : MonoBehaviour
 
     public void GetSpecificPlayerData()
     {
-        playFabManager.PlayerDataManager.GetSinglePlayerData(playerDataKey, OnGetSinglePlayerData);
+        playFabManager.PlayerDataManager.GetPlayerDatas(OnGetSinglePlayerData, new List<string> { playerDataKey });
     }
 
-    private void OnGetSinglePlayerData(string obj)
+    private void OnGetSinglePlayerData(Dictionary<string, string> obj)
     {
         if (obj == null)
         {
@@ -131,23 +127,25 @@ public class Test : MonoBehaviour
             return;
         }
 
-        Debug.Log($"Value is {obj}");
+        Debug.Log($"Value is {obj[playerDataKey]}");
     }
 
     public void GetGenericData()
     {
-        playFabManager.PlayerDataManager.GetSinglePlayerData<MyClass>(playerDataKey, OnGetGenericPlayerData);
+        playFabManager.PlayerDataManager.GetPlayerDatas(OnGetGenericPlayerData, new List<string> { playerDataKey });
     }
 
-    private void OnGetGenericPlayerData(MyClass obj)
+    private void OnGetGenericPlayerData(Dictionary<string, string> datas)
     {
-        if (obj == null)
+        if (datas == null)
         {
             Debug.Log("Object is null");
             return;
         }
 
-        //Debug.Log($"BRUUUUUUUUH {obj.myString}");
+        MyClass myClass = JsonUtility.FromJson<MyClass>(datas[playerDataKey]);
+        Debug.Log($"{myClass.myString}");
+
     }
 
     public void SendDataToLeaderboard()
@@ -228,12 +226,11 @@ public class Test : MonoBehaviour
 
     public void CreateLobby()
     {
-        playFabManager.LobbyManager.CreateLobby(LobbyManager_onLobbyCreated);
+        playFabManager.LobbyManager.CreateLobby(4, LobbyManager_onLobbyCreated);
     }
 
     private void LobbyManager_onLobbyCreated(CreateLobbyResult obj)
     {
-        lobbyID = obj.LobbyId;
         lobbyArrangementString = obj.ConnectionString;
     }
 
@@ -242,51 +239,45 @@ public class Test : MonoBehaviour
         playFabManager.LobbyManager.JoinLobby(lobbyArrangementString);
     }
 
-    private void LobbyManager_onJoinedLobby(PlayFab.MultiplayerModels.JoinLobbyResult result)
-    {
-        lobbyID = result.LobbyId;
-        GetLobby();
-    }
-
     public void FindLobbies()
     {
-        playFabManager.LobbyManager.FindLobbies();
+        playFabManager.LobbyManager.FindLobbies(OnFoundLobbies);
     }
 
-    public void DeleteAllLobbies()
+    private void OnFoundLobbies(List<LobbySummary> obj)
     {
-        playFabManager.LobbyManager.DeleteAllLobbies();
+        Debug.Log($"Found {obj.Count} lobbies");
     }
 
     public void LeaveCurrentLobby()
     {
-        playFabManager.LobbyManager.LeaveLobby(lobbyID);
+        playFabManager.LobbyManager.LeaveCurrentLobby();
     }
 
     public void SetLobbyName()
     {
-        playFabManager.LobbyManager.SetLobbyName(lobbyID, lobbyName);
+        playFabManager.LobbyManager.SetCurrentLobbyData(new Dictionary<string, string> { { "name", lobbyName } });
     }
 
     public void GetLobby()
     {
-        playFabManager.LobbyManager.GetLobby(lobbyID, OnGotLobby);
+        playFabManager.LobbyManager.GetCurrentLobby(OnGotLobby);
     }
 
-    private void OnGotLobby(GetLobbyResult result)
+    private void OnGotLobby(Lobby result)
     {
-        if (result.Lobby.LobbyData == null)
+        if (result.LobbyData == null)
         {
             Debug.Log("Lobby has no lobby data");
             return;
         }
-        if (!result.Lobby.LobbyData.ContainsKey("name"))
+        if (!result.LobbyData.ContainsKey("name"))
         {
             Debug.Log("Lobby has no name");
             return;
         }
 
-        lobbyName = result.Lobby.LobbyData["name"];
+        lobbyName = result.LobbyData["name"];
         Debug.Log(lobbyName);
     }
 
@@ -306,7 +297,7 @@ public class Test : MonoBehaviour
 
             string displayName = playFabManager.IsLoggedIn ? $"Logged in as -{playFabManager.DisplayName}-" : "Not connected";
             GUI.Label(new Rect(5, Screen.height - 50, 200, 50), displayName);
-            GUI.Label(new Rect(210, 15, 200, 50), playFabManager.MatchmakingManager.Status);
+            GUI.Label(new Rect(210, 15, 200, 50), playFabManager.MatchmakingManager.Status.ToString());
             GUI.Label(new Rect(110, 115, 200, 50), $"Elo : {testElo}");
 
             if (GUI.Button(new Rect(Screen.width - 100, 0, 100, 50), "Create Lobby")) { CreateLobby(); }
@@ -315,7 +306,7 @@ public class Test : MonoBehaviour
             if (GUI.Button(new Rect(Screen.width - 100, 150, 100, 50), "Find Lobbies")) { FindLobbies(); }
             if (GUI.Button(new Rect(Screen.width - 100, 200, 100, 50), "Set Lobby Name")) { SetLobbyName(); };
             lobbyArrangementString = GUI.TextField(new Rect(Screen.width - 200, 0, 100, 25), lobbyArrangementString);
-            lobbyID = GUI.TextField(new Rect(Screen.width - 200, 25, 100, 25), lobbyID);
+            GUI.TextField(new Rect(Screen.width - 200, 25, 100, 25), PlayFabManager.Instance.LobbyManager.currentLobbyID);
             lobbyName = GUI.TextField(new Rect(Screen.width - 200, 50, 100, 25), lobbyName);
         }
     }

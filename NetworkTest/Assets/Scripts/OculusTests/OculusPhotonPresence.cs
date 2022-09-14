@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Oculus.Platform;
 using TMPro;
-using PlayFabIntegration;
+using FishingCactus.PlayFabIntegration;
 using PlayFab.MultiplayerModels;
 using Fusion;
 using System.Threading.Tasks;
@@ -29,8 +29,7 @@ public class OculusPhotonPresence : MonoBehaviour
     void Start()
     {
         Core.AsyncInitialize().OnComplete(OnOculusCoreInitialized);
-        PlayFabManager.Instance.LoginManager.LogIn();
-        PlayFabManager.Instance.LoginManager.onSuccessfulLogIn += LoginManager_onSuccessfulLogIn;
+        PlayFabManager.Instance.LoginManager.LogIn(SystemInfo.deviceUniqueIdentifier, LoginManager_onSuccessfulLogIn);
     }
 
     private void Update()
@@ -134,7 +133,7 @@ public class OculusPhotonPresence : MonoBehaviour
     {
         if (!string.IsNullOrEmpty(lobbyID)) { Debug.Log("You already are in a lobby"); return; }
 
-        PlayFabManager.Instance.LobbyManager.CreateLobby(OnCreatedLobby);
+        PlayFabManager.Instance.LobbyManager.CreateLobby(2, OnCreatedLobby);
     }
 
     private void OnCreatedLobby(CreateLobbyResult obj)
@@ -153,7 +152,7 @@ public class OculusPhotonPresence : MonoBehaviour
     {
         Debug.Log("Manual invitation");
         InviteOptions op = new InviteOptions();
-        GroupPresence.LaunchInvitePanel(op); 
+        GroupPresence.LaunchInvitePanel(op);
     }
 
     public void DisplayPresence()
@@ -194,10 +193,10 @@ public class OculusPhotonPresence : MonoBehaviour
         PlayFabManager.Instance.LobbyManager.SetLobbyData(lobbyID, new Dictionary<string, string> { { "Conn", connID } });
     }
 
-    private void OnGotLobby(GetLobbyResult obj)
+    private void OnGotLobby(Lobby obj)
     {
         if (obj == null) return;
-        DisplayLobbyInfo(obj.Lobby);
+        DisplayLobbyInfo(obj);
     }
 
     private void DisplayLobbyInfo(Lobby lobby)
@@ -220,7 +219,7 @@ public class OculusPhotonPresence : MonoBehaviour
 
             if (lobby.Members.Count - 1 >= i)
             {
-                playerTexts[i].text = $"Player {i}"; 
+                playerTexts[i].text = $"Player {i}";
             }
             else
             {

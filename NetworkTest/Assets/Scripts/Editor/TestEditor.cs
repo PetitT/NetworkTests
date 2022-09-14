@@ -2,14 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
-using PlayFabIntegration;
+using FishingCactus.PlayFabIntegration;
 using System;
 
 [CustomEditor(typeof(Test))]
 public class TestEditor : Editor
 {
     Test test;
-    PlayFabManager manager => test.playFabManager;
+    PlayFabManager manager => PlayFabManager.Instance;
 
     public override void OnInspectorGUI()
     {
@@ -116,7 +116,7 @@ public class TestEditor : Editor
 
         GUILayout.Space(10);
         GUILayout.Label("---LOBBIES---");
-        test.lobbyID = EditorGUILayout.TextField("Lobby ID", test.lobbyID);
+        EditorGUILayout.TextField("Lobby ID", PlayFabManager.Instance.LobbyManager.currentLobbyID);
         test.lobbyName = EditorGUILayout.TextField("Lobby Name", test.lobbyName);
         test.lobbyArrangementString = EditorGUILayout.TextField("Lobby Arrangement String", test.lobbyArrangementString);
         if(GUILayout.Button("Set Lobby Name"))

@@ -1,5 +1,5 @@
 using Mirror;
-using PlayFabIntegration;
+using FishingCactus.PlayFabIntegration;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -47,7 +47,7 @@ public class PlayerDisplay : NetworkBehaviour
         try
         {
             teamId = PlayFabManager.Instance.MatchmakingManager.MatchResult.Members.FirstOrDefault(
-               t => t.Entity.Id == PlayFabManager.Instance.EntityID)
+               t => t.Entity.Id == PlayFabManager.Instance.EntityKey.Id)
                .TeamId;
         }
         catch

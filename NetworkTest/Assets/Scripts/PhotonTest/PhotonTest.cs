@@ -1,7 +1,7 @@
 using Fusion;
 using Fusion.Sockets;
 using PlayFab.MultiplayerModels;
-using PlayFabIntegration;
+using FishingCactus.PlayFabIntegration;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -96,12 +96,12 @@ public class PhotonTest : MonoBehaviour
         PlayFabManager.Instance.LobbyManager.GetCurrentLobby(OnPolledLobby);
     }
 
-    private void OnPolledLobby(GetLobbyResult obj)
+    private void OnPolledLobby(Lobby obj)
     {
-        if (obj.Lobby.LobbyData == null) { Debug.Log("No Lobby data"); return; }
-        if (obj.Lobby.LobbyData.ContainsKey("conn"))
+        if (obj.LobbyData == null) { Debug.Log("No Lobby data"); return; }
+        if (obj.LobbyData.ContainsKey("conn"))
         {
-            sessionName = obj.Lobby.LobbyData["conn"];
+            sessionName = obj.LobbyData["conn"];
             Debug.Log($"Found connection string {sessionName}. Trying to connect");
             connecting = true;
             AwaitClientStart();
@@ -114,11 +114,11 @@ public class PhotonTest : MonoBehaviour
         {
             if (GUI.Button(new Rect(0, 0, 100, 50), "Device Login"))
             {
-                PlayFabManager.Instance.LoginManager.LogIn(LoginManager.LoginMethod.DeviceID);
+                PlayFabManager.Instance.LoginManager.LogIn(SystemInfo.deviceUniqueIdentifier);
             }
             if (GUI.Button(new Rect(0, 50, 100, 50), "Random Login"))
             {
-                PlayFabManager.Instance.LoginManager.LogIn(LoginManager.LoginMethod.Random);
+                PlayFabManager.Instance.LoginManager.LogIn(UnityEngine.Random.Range(10000,99999).ToString());
             }
         }
         else
@@ -131,7 +131,7 @@ public class PhotonTest : MonoBehaviour
 
             if (GUI.Button(new Rect(0, 40, 100, 50), "Create Lobby"))
             {
-                PlayFabManager.Instance.LobbyManager.CreateLobby(OnLobbyCreated);
+                PlayFabManager.Instance.LobbyManager.CreateLobby(4,OnLobbyCreated);
             }
 
             if (GUI.Button(new Rect(100, 40, 100, 50), "Join Lobby"))

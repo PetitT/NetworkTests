@@ -5,7 +5,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using PlayFabIntegration;
+using FishingCactus.PlayFabIntegration;
 using PlayFab.ClientModels;
 
 public class OculusTest : MonoBehaviour
@@ -15,7 +15,7 @@ public class OculusTest : MonoBehaviour
     private void Start()
     {
         OculusManager.Instance.StartupManager.AsyncInitializeCore(OnCoreInitialized);
-        PlayFabManager.Instance.LoginManager.LogIn(onLoggedIn: OnPlayfabLogin);
+        PlayFabManager.Instance.LoginManager.LogIn(SystemInfo.deviceUniqueIdentifier, onLoggedIn: OnPlayfabLogin);
     }
 
     private void OnCoreInitialized(Message<PlatformInitialize> message)

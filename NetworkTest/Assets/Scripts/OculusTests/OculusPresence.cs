@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Oculus.Platform;
 using TMPro;
-using PlayFabIntegration;
+using FishingCactus.PlayFabIntegration;
 using PlayFab.MultiplayerModels;
 
 public class OculusPresence : MonoBehaviour
@@ -24,8 +24,7 @@ public class OculusPresence : MonoBehaviour
     void Start()
     {
         Core.AsyncInitialize().OnComplete(OnOculusCoreInitialized);
-        PlayFabManager.Instance.LoginManager.LogIn();
-        PlayFabManager.Instance.LoginManager.onSuccessfulLogIn += LoginManager_onSuccessfulLogIn;
+        PlayFabManager.Instance.LoginManager.LogIn(SystemInfo.deviceUniqueIdentifier, LoginManager_onSuccessfulLogIn);
     }
 
     private void Update()
@@ -129,7 +128,7 @@ public class OculusPresence : MonoBehaviour
     {
         if (!string.IsNullOrEmpty(lobbyID)) { Debug.Log("You already are in a lobby"); return; }
 
-        PlayFabManager.Instance.LobbyManager.CreateLobby(OnCreatedLobby);
+        PlayFabManager.Instance.LobbyManager.CreateLobby(2, OnCreatedLobby);
     }
 
     private void OnCreatedLobby(CreateLobbyResult obj)
@@ -189,10 +188,10 @@ public class OculusPresence : MonoBehaviour
         PlayFabManager.Instance.LobbyManager.SetLobbyData(lobbyID, new Dictionary<string, string> { { "Conn", JsonUtility.ToJson(serverConnectionData) } });
     }
 
-    private void OnGotLobby(GetLobbyResult obj)
+    private void OnGotLobby(Lobby obj)
     {
         if (obj == null) return;
-        DisplayLobbyInfo(obj.Lobby);
+        DisplayLobbyInfo(obj);
     }
 
     private void DisplayLobbyInfo(Lobby lobby)

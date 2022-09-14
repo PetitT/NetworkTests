@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace PlayFabIntegration
+namespace FishingCactus.PlayFabIntegration
 {
     /// <summary>
     /// The playfab manager serves as a parent class containing all the features of the playfab integration
@@ -12,13 +12,15 @@ namespace PlayFabIntegration
     {
         private static PlayFabManager instance;
         public static PlayFabManager Instance => instance ??= FindObjectOfType<PlayFabManager>();
-        public Configuration Config;
+
+        private Configuration configuration;
+        public Configuration Configuration => configuration ??= Resources.Load<Configuration>("PlayfabConfiguration");
+
         public bool IsLoggedIn => LoginManager.IsLoggedIn;
         public string DisplayName => LoginManager.DisplayName;
-        public string PlayfabID => LoginManager.LoggedInPlayFabID;
-        public string EntityID => LoginManager.EntityID;
         public EntityKey EntityKey => LoginManager.EntityKey;
         public string SessionTicket => LoginManager.SessionTicket;
+        public string PlayfabID => LoginManager.PlayFabID;
 
         public LoginManager LoginManager { get; private set; } = new LoginManager();
         public LeaderboardManager LeaderboardManager { get; private set; } = new LeaderboardManager();

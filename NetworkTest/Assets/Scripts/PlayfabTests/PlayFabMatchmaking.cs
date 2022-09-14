@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using PlayFab;
 using PlayFab.MultiplayerModels;
-using PlayFabIntegration;
+using FishingCactus.PlayFabIntegration;
 using System;
 
 public class PlayFabMatchmaking : MonoBehaviour
@@ -27,7 +27,7 @@ public class PlayFabMatchmaking : MonoBehaviour
                 {
                     Entity = new EntityKey
                     {
-                        Id = manager.EntityID,
+                        Id = manager.EntityKey.Id,
                         Type = "title_player_account"
                     },
                     Attributes = new MatchmakingPlayerAttributes

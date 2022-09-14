@@ -1,36 +1,27 @@
-using Mirror;
 using PlayFab;
 using PlayFab.MultiplayerModels;
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 
-namespace PlayFabIntegration
+namespace FishingCactus.PlayFabIntegration
 {
-
-    /// <summary>
-    /// This class allows a client to manually request for a server. 
-    /// </summary>
     public class ServerRequestManager
     {
-
-        public void RequestMultiplayerServer(Action<RequestMultiplayerServerResponse> onGotServer)
+        public void RequestMultiplayerServer( Action<RequestMultiplayerServerResponse> onGotServer )
         {
+            PlayFabLogging.Log( "Attempting to get a multiplayer server" );
 
-            PlayFabLogging.Log("RequestMultiplayerServer");
             var request = new RequestMultiplayerServerRequest
             {
-                BuildId = PlayFabManager.Instance.Config.buildId,
-                SessionId = System.Guid.NewGuid().ToString(),
-                PreferredRegions = PlayFabManager.Instance.Config.preferredRegions
+                BuildId = PlayFabManager.Instance.Configuration.buildId,
+                SessionId = Guid.NewGuid().ToString(),
+                PreferredRegions = PlayFabManager.Instance.Configuration.preferredRegions
             };
 
             PlayFabMultiplayerAPI.RequestMultiplayerServer(
                 request,
-                (response) =>
+                ( response ) =>
                 {
-                    PlayFabLogging.Log("Requested multiplayer server");                
+                    PlayFabLogging.Log("Found a multiplayer server");                
                     onGotServer?.Invoke(response);
                 },
                 (error) =>

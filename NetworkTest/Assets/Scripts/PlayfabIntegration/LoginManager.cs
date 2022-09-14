@@ -1,35 +1,24 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 using PlayFab;
 using PlayFab.ClientModels;
 using System;
 
-namespace PlayFabIntegration
+namespace FishingCactus.PlayFabIntegration
 {
-    /// <summary>
-    /// The login manager allows one to connect to a playfab account and to set their display name
-    /// </summary>
     public class LoginManager
     {
-        public event Action<LoginResult> onSuccessfulLogIn;
-
-        public event Action<string> onUpdatedDisplayName;
-
-        public bool IsLoggedIn { get; private set; }
+        public bool IsLoggedIn => !string.IsNullOrEmpty(SessionTicket);
         public string DisplayName { get; private set; }
-        public string LoggedInPlayFabID { get; private set; }
-        public string EntityID { get; private set; }
+        public string PlayFabID { get; private set; }
         public string SessionTicket { get; private set; }
         public EntityKey EntityKey { get; private set; }
-        public enum LoginMethod { DeviceID, Random }
 
-        /// <summary>
-        /// Logs the player to an account. 
-        /// </summary>
-        /// <param name="method">Logging with Device ID means there is one account per device. Logging with random ID serves as testing tool</param>
-        public void LogIn(LoginMethod method = LoginMethod.DeviceID, Action<LoginResult> onLoggedIn = null)
+        public void LogIn(
+            string id,
+            Action<LoginResult> onLoggedIn = null
+            )
         {
+            PlayFabLogging.Log("Attempt to log in");
+
             if (IsLoggedIn)
             {
                 PlayFabLogging.Log("Already logged in");
@@ -37,27 +26,12 @@ namespace PlayFabIntegration
                 return;
             }
 
-            string ID = "";
-
-            switch (method)
-            {
-                case LoginMethod.DeviceID:
-                    ID = SystemInfo.deviceUniqueIdentifier;
-                    break;
-                case LoginMethod.Random:
-                    ID = UnityEngine.Random.Range(10000, 99999).ToString();
-                    break;
-
-                default:
-                    break;
-            }
-
             var request = new LoginWithCustomIDRequest
             {
-                CustomId = ID,
+                CustomId = id,
                 CreateAccount = true,
                 InfoRequestParameters = new GetPlayerCombinedInfoRequestParams
-                {                    
+                {
                     GetPlayerProfile = true
                 }
             };
@@ -73,18 +47,15 @@ namespace PlayFabIntegration
                 {
                     PlayFabLogging.LogError("Failed to login", error);
                     onLoggedIn?.Invoke(null);
-                }
-                );
+                });
         }
 
         private void OnLoggedIn(LoginResult result)
         {
             PlayFabLogging.Log("Successful login!");
             EntityKey = result.EntityToken.Entity;
-            IsLoggedIn = true;
-            LoggedInPlayFabID = result.PlayFabId;
+            PlayFabID = result.PlayFabId;
             SessionTicket = result.SessionTicket;
-            EntityID = result.EntityToken.Entity.Id;
 
             if (result.InfoResultPayload.PlayerProfile != null) //This will be null if the account was just created
             {
@@ -94,11 +65,9 @@ namespace PlayFabIntegration
                     DisplayName = newDisplayName;
                 }
             }
-
-            onSuccessfulLogIn?.Invoke(result);
         }
 
-        public void UpdateDisplayName(string newName)
+        public void UpdateDisplayName( string newName )
         {
             var request = new UpdateUserTitleDisplayNameRequest
             {
@@ -107,16 +76,13 @@ namespace PlayFabIntegration
 
             PlayFabClientAPI.UpdateUserTitleDisplayName(
                 request,
-                OnUpdatedDisplayName,
-                (error) => PlayFabLogging.LogError("Failed to update display name", error)
+                ( result ) =>
+                {
+                    PlayFabLogging.Log($"Successfully updated display name to { result.DisplayName }");
+                    DisplayName = result.DisplayName;
+                },
+                ( error ) => PlayFabLogging.LogError("Failed to update display name", error)
                 );
-        }
-
-        private void OnUpdatedDisplayName(UpdateUserTitleDisplayNameResult result)
-        {
-            PlayFabLogging.Log($"Successfully updated display name to { result.DisplayName}");
-            DisplayName = result.DisplayName;
-            onUpdatedDisplayName?.Invoke(DisplayName);
         }
     }
 }
