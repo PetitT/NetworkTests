@@ -1,6 +1,7 @@
 using PlayFab;
 using PlayFab.MultiplayerModels;
 using System;
+using System.Linq;
 
 namespace FishingCactus.PlayFabIntegration
 {
@@ -14,20 +15,20 @@ namespace FishingCactus.PlayFabIntegration
             {
                 BuildId = PlayFabManager.Instance.Configuration.buildId,
                 SessionId = Guid.NewGuid().ToString(),
-                PreferredRegions = PlayFabManager.Instance.Configuration.preferredRegions
+                PreferredRegions = PlayFabManager.Instance.Configuration.preferredRegions.ToList()
             };
 
             PlayFabMultiplayerAPI.RequestMultiplayerServer(
                 request,
                 ( response ) =>
                 {
-                    PlayFabLogging.Log("Found a multiplayer server");                
-                    onGotServer?.Invoke(response);
+                    PlayFabLogging.Log( "Found a multiplayer server" );                
+                    onGotServer?.Invoke( response );
                 },
-                (error) =>
+                ( error ) =>
                 {
-                    PlayFabLogging.LogError("Couldn't request multiplayer server", error);
-                    onGotServer?.Invoke(null);
+                    PlayFabLogging.LogError( "Couldn't request multiplayer server", error );
+                    onGotServer?.Invoke( null );
                 });
         }
 

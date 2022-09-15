@@ -11,10 +11,6 @@ namespace FishingCactus.PlayFabIntegration
 {
     public class PlayerDataManager
     { 
-        /// <summary>
-        /// </summary>
-        /// <param name="dataName"></param>
-        /// <param name="newValue">The object must be serializable as it will be converted to JSON</param>
         public void SavePlayerData(
             string dataName, 
             object newValue
@@ -48,12 +44,15 @@ namespace FishingCactus.PlayFabIntegration
 
             PlayFabClientAPI.UpdateUserData(
                 request, 
-                ( result ) => PlayFabLogging.Log( $"Succesfully updated player data "), 
+                ( result ) => PlayFabLogging.Log( $"Succesfully updated player data " ), 
                 ( error ) => PlayFabLogging.LogError( "Couldn't update player data", error )
                 );
         }
 
-        public void GetPlayerDatas( Action<Dictionary<string, string>> onGetPlayerDatas, List<string> specificKeys = null )
+        public void GetPlayerDatas( 
+            Action<Dictionary<string, string>> onGetPlayerDatas, 
+            List<string> specificKeys = null
+            )
         {
             PlayFabLogging.Log( "Attempt to get player datas" );
 
@@ -76,19 +75,18 @@ namespace FishingCactus.PlayFabIntegration
                });
         }    
 
-        private Dictionary<string, string> GetDictionnaryFromUserDataResult(GetUserDataResult result)
+        private Dictionary<string, string> GetDictionnaryFromUserDataResult( GetUserDataResult result )
         {
-            if (result.Data == null)
+            if ( result.Data == null )
             {
-                PlayFabLogging.Log("User Data was null");
+                PlayFabLogging.Log( "User Data was null" );
                 return null;
             }
 
-
             Dictionary<string, string> dict = new Dictionary<string, string>();
-            foreach (var item in result.Data)
+            foreach ( var item in result.Data )
             {
-                dict.Add(item.Key, item.Value.Value);
+                dict.Add( item.Key, item.Value.Value );
             }
 
             return dict;

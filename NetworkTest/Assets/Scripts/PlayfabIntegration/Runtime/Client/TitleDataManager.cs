@@ -12,7 +12,7 @@ namespace FishingCactus.PlayFabIntegration
             List<string> specificKeys = null
             )
         {
-            PlayFabLogging.Log("Attempt to get title datas");
+            PlayFabLogging.Log( "Attempt to get title datas" );
 
             var request = new GetTitleDataRequest
             {
@@ -21,15 +21,15 @@ namespace FishingCactus.PlayFabIntegration
               
             PlayFabClientAPI.GetTitleData(
                 request,
-                (result) =>
+                ( result ) =>
                 {
-                    PlayFabLogging.Log("Succesfully got title datas");
-                    onGetResult?.Invoke(result.Data);
+                    PlayFabLogging.Log( "Succesfully got title datas" );
+                    onGetResult?.Invoke( result.Data );
                 },
-                (error) =>
+                ( error ) =>
                 {
-                    PlayFabLogging.LogError("Couldn't get title datas", error);
-                    onGetResult?.Invoke(null);
+                    PlayFabLogging.LogError( "Couldn't get title datas", error );
+                    onGetResult?.Invoke( null );
                 });
         }
     }

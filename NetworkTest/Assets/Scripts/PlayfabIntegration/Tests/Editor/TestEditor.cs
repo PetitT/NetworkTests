@@ -5,16 +5,16 @@ using UnityEditor;
 using FishingCactus.PlayFabIntegration;
 using System;
 
-[CustomEditor(typeof(Test))]
+[CustomEditor(typeof(PlayFabTest))]
 public class TestEditor : Editor
 {
-    Test test;
+    PlayFabTest test;
     PlayFabManager manager => PlayFabManager.Instance;
 
     public override void OnInspectorGUI()
     {
         base.OnInspectorGUI();
-        test = target as Test;
+        test = target as PlayFabTest;
 
         GUILayout.Space(10);
         GUILayout.Label("----LOGIN----");

@@ -31,13 +31,6 @@ namespace FishingCactus.PlayFabIntegration
                 );
         }
 
-        /// <summary>
-        /// Attemps to get a leaderboard
-        /// </summary>
-        /// <param name="leaderboardName"></param>
-        /// <param name="maxResultsCount">Number of results, will return an empty list if set to 0</param>
-        /// <param name="onGetLeaderboard">Callback returning a list of leaderboard entries</param>
-        /// <param name="startPosition">Initial position of the leaderboard entries(</param>
         public void GetLeaderboard(
             string leaderboardName,
             int maxResultsCount,
@@ -66,12 +59,6 @@ namespace FishingCactus.PlayFabIntegration
                 });
         }
 
-        /// <summary>
-        /// Attemps to get a leaderboard. The entries will be centered around the player making the request
-        /// </summary>
-        /// <param name="Leaderboard"></param>
-        /// <param name="maxResults">Number of results around the player, will return an empty list if set to 0</param>
-        /// <param name="onGetLeaderboard">Callback returning the list of entries</param>
         public void GetLeaderboardAroundPlayer(
             string Leaderboard, 
             int maxResults, 

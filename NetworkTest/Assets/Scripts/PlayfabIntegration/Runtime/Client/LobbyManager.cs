@@ -12,7 +12,6 @@ namespace FishingCactus.PlayFabIntegration
     {
         //FIELDS
         private PlayFab.MultiplayerModels.EntityKey entityKey;
-        public event Action<JoinLobbyResult> onJoinedLobby;
         public string currentLobbyID { get; private set; }
 
         //PROPERTIES
@@ -20,12 +19,12 @@ namespace FishingCactus.PlayFabIntegration
 
         //METHODS
 
-        // This is a workaround to convert the entity key from two different namespaces
+        // Converts the entity key from two different namespaces
         private PlayFab.MultiplayerModels.EntityKey GetMultiplayerEntityKey()
         {
             if ( !PlayFabManager.Instance.IsLoggedIn )
             {
-                PlayFabLogging.Log( "Must be connected to Playfab to call this method" );
+                PlayFabLogging.LogError( "Must be connected to Playfab to call this method" );
                 return null;
             }
 

@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2084fb1946aec9340a63c6f053f9b57a, type: 3}
-  m_Name: Configuration
+  m_Name: PlayfabConfiguration
   m_EditorClassIdentifier: 
   buildType: 0
   buildId: e33c5fd7-42d9-4493-8248-d19e72d17bce

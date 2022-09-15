@@ -32,7 +32,7 @@ namespace FishingCactus.PlayFabIntegration
         public MatchmakingStatus Status { get; private set; } = MatchmakingStatus.None;
 
         //PROPERTIES
-        private bool isPollingTicket => (Status & (MatchmakingStatus.WaitingForPlayers | MatchmakingStatus.WaitingForMatch | MatchmakingStatus.WaitingForServer)) != 0;
+        private bool isPollingTicket => ( Status & ( MatchmakingStatus.WaitingForPlayers | MatchmakingStatus.WaitingForMatch | MatchmakingStatus.WaitingForServer ) ) != 0;
 
         //METHODS
 
@@ -113,8 +113,6 @@ namespace FishingCactus.PlayFabIntegration
                 ( result ) => OnGetMatchmakingTicket( result ),
                 ( error ) => PlayFabLogging.LogError( "Couldn't get matchmaking ticket", error )
                 );
-
-            remainingTimeToPollTicket = timeToPollTicket;
         }
 
         private void OnGetMatchmakingTicket( GetMatchmakingTicketResult result )

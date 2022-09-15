@@ -18,6 +18,14 @@ namespace FishingCactus.PlayFabIntegration
             }
         }
 
+        public static void LogError( string text )
+        {
+            if( shouldLog)
+            {
+                Debug.LogError( text );
+            }
+        }
+
         public static void Log( string text )
         {
             if ( shouldLog )

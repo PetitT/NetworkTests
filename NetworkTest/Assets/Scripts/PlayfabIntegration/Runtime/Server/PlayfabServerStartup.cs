@@ -38,26 +38,8 @@ namespace FishingCactus.PlayFabIntegration
         private void OnServerActive()
         {
             PlayFabLogging.LogWarning( "[SERVER STARTUP] PLAYFAB SERVER STARTED FROM AGENT ACTIVATION" );
+            sessionID = PlayFabMultiplayerAgentAPI.SessionConfig.SessionId;
             onServerStarted?.Invoke();
-        }
-
-        private void AddPlayer( string playerID )
-        {
-            ConnectedPlayer player = new ConnectedPlayer( playerID );
-            connectedPlayers.Add( player );
-            PlayFabMultiplayerAgentAPI.UpdateConnectedPlayers( connectedPlayers );
-        }
-
-        private void OnPlayerLeft( string playerID )
-        {
-            ConnectedPlayer player = connectedPlayers.FirstOrDefault( player => player.PlayerId == playerID );
-            connectedPlayers.Remove( player );
-            PlayFabMultiplayerAgentAPI.UpdateConnectedPlayers( connectedPlayers );
-            if ( connectedPlayers.Count <= 0 )
-            {
-                PlayFabLogging.LogWarning( "[SERVER STARTUP] NO MORE PLAYERS, SHUTTING DOWN SERVER" );
-                StartShutdownProcess();
-            }
         }
 
         private void OnAgentError( string error )
@@ -75,6 +57,25 @@ namespace FishingCactus.PlayFabIntegration
         {
             PlayFabLogging.LogWarning( "[SERVER STARTUP] REQUEST MAINTENANCE" );
             StartShutdownProcess();
+        }
+
+        public void AddPlayer(string playerID)
+        {
+            ConnectedPlayer player = new ConnectedPlayer(playerID);
+            connectedPlayers.Add(player);
+            PlayFabMultiplayerAgentAPI.UpdateConnectedPlayers(connectedPlayers);
+        }
+
+        public void RemovePlayer(string playerID)
+        {
+            ConnectedPlayer player = connectedPlayers.FirstOrDefault(player => player.PlayerId == playerID);
+            connectedPlayers.Remove(player);
+            PlayFabMultiplayerAgentAPI.UpdateConnectedPlayers(connectedPlayers);
+            if (connectedPlayers.Count <= 0)
+            {
+                PlayFabLogging.LogWarning("[SERVER STARTUP] NO MORE PLAYERS, SHUTTING DOWN SERVER");
+                StartShutdownProcess();
+            }
         }
 
         private void StartShutdownProcess()
@@ -109,14 +110,6 @@ namespace FishingCactus.PlayFabIntegration
             {
                 PlayFabLogging.LogWarning( "[SERVER STARTUP] BEGIN OF REMOTE SERVER" );
                 StartRemoteServer();
-            }
-        }
-
-        private void OnDisable()
-        {
-            if ( Config.buildType == BuildType.REMOTE_SERVER )
-            {
-                //CleanUpRemoteServer();
             }
         }
     }

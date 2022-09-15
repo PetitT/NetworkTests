@@ -6,23 +6,27 @@ namespace FishingCactus.PlayFabIntegration
 {
     public class LoginManager
     {
-        public bool IsLoggedIn => !string.IsNullOrEmpty(SessionTicket);
+        //FIELDS
         public string DisplayName { get; private set; }
         public string PlayFabID { get; private set; }
         public string SessionTicket { get; private set; }
         public EntityKey EntityKey { get; private set; }
 
+        //PROPERTIES
+        public bool IsLoggedIn => !string.IsNullOrEmpty(SessionTicket);
+
+        //METHODS
         public void LogIn(
             string id,
             Action<LoginResult> onLoggedIn = null
             )
         {
-            PlayFabLogging.Log("Attempt to log in");
+            PlayFabLogging.Log( "Attempt to log in" );
 
-            if (IsLoggedIn)
+            if ( IsLoggedIn )
             {
-                PlayFabLogging.Log("Already logged in");
-                onLoggedIn?.Invoke(null);
+                PlayFabLogging.LogError( "Already logged in" );
+                onLoggedIn?.Invoke( null );
                 return;
             }
 
@@ -38,29 +42,29 @@ namespace FishingCactus.PlayFabIntegration
 
             PlayFabClientAPI.LoginWithCustomID(
                 request,
-                (result) =>
+                ( result ) =>
                 {
-                    OnLoggedIn(result);
-                    onLoggedIn?.Invoke(result);
+                    OnLoggedIn( result );
+                    onLoggedIn?.Invoke( result );
                 },
-                (error) =>
+                ( error ) =>
                 {
-                    PlayFabLogging.LogError("Failed to login", error);
-                    onLoggedIn?.Invoke(null);
+                    PlayFabLogging.LogError( "Failed to login", error );
+                    onLoggedIn?.Invoke( null );
                 });
         }
 
-        private void OnLoggedIn(LoginResult result)
+        private void OnLoggedIn( LoginResult result )
         {
-            PlayFabLogging.Log("Successful login!");
+            PlayFabLogging.Log( "Successful login!" );
             EntityKey = result.EntityToken.Entity;
             PlayFabID = result.PlayFabId;
             SessionTicket = result.SessionTicket;
 
-            if (result.InfoResultPayload.PlayerProfile != null) //This will be null if the account was just created
+            if ( result.InfoResultPayload.PlayerProfile != null ) //This will be null if the account was just created
             {
                 string newDisplayName = result.InfoResultPayload.PlayerProfile.DisplayName;
-                if (!string.IsNullOrEmpty(newDisplayName))
+                if ( !string.IsNullOrEmpty( newDisplayName ) )
                 {
                     DisplayName = newDisplayName;
                 }
@@ -78,10 +82,10 @@ namespace FishingCactus.PlayFabIntegration
                 request,
                 ( result ) =>
                 {
-                    PlayFabLogging.Log($"Successfully updated display name to { result.DisplayName }");
+                    PlayFabLogging.Log( $"Successfully updated display name to { result.DisplayName }" );
                     DisplayName = result.DisplayName;
                 },
-                ( error ) => PlayFabLogging.LogError("Failed to update display name", error)
+                ( error ) => PlayFabLogging.LogError( "Failed to update display name", error )
                 );
         }
     }

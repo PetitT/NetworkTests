@@ -8,7 +8,7 @@ public class Configuration : ScriptableObject
 	public BuildType buildType;
 	public string buildId = "";
 	public bool playFabDebugging = false;
-	public List<string> preferredRegions = new List<string>();
+	public string[] preferredRegions;
 }
 
 public enum BuildType

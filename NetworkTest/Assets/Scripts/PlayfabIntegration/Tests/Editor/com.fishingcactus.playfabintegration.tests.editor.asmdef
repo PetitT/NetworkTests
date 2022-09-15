@@ -1,0 +1,19 @@
+{
+    "name": "com.fishingcactus.playfabintegration.tests.editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:1ac1335289cc70f47abd215ee037b77b",
+        "GUID:10ea7848ceb38994ab08573e2116ad73"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
