@@ -15,18 +15,18 @@
 -For instance if you want a queue with an Elo rule and a Latency rule, define a "Difference rule" with an attribute path "$.elo", and a "Region selection rule" with an attribute "latencies" 
 -In code, you will pass the custom attributes object like this :
 ```
-		new
+new
+{
+	elo = 15,
+        latencies = new object[]
+        {
+        	new
                 {
-                    elo = 15,
-                    latencies = new object[]
-                    {
-                        new
-                        {
-                            region = "NorthEurope",
-                            latency = 100
-                        }
-                    }
-                }
+                	region = "NorthEurope",
+                        latency = 100
+                 }
+         }
+ }
 ```
 ### Upload a server build
 -Set the build type in the PlayFabConfiguration asset as "REMOTE_SERVER"
