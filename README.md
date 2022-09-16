@@ -4,8 +4,7 @@
 
 ### Create a new PlayFab account and title
 - In Settings/API Features, enable "Allow client to start games"
-
-### Enable Multiplayer services
+- Enable Multiplayer services
 
 ### Create a matchmaking queue
 - Check Enable Server Allocation and define the build ID that is going to be allocated for that queue
