@@ -14,6 +14,7 @@
 -The attribute path corresponds to the name of the attribute that will be passed by code, it should start with $. unless it is a region selection rule 
 -For instance if you want a queue with an Elo rule and a Latency rule, define a "Difference rule" with an attribute path "$.elo", and a "Region selection rule" with an attribute "latencies" 
 -In code, you will pass the custom attributes object like this :
+```
 		new
                 {
                     elo = 15,
@@ -26,7 +27,7 @@
                         }
                     }
                 }
-
+```
 ### Upload a server build
 -Set the build type in the PlayFabConfiguration asset as "REMOTE_SERVER"
 -Make a dedicated server build 
