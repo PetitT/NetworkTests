@@ -43,7 +43,7 @@ new
 
 ### Log into playfab in the PlayFabEditorExtentions window
 - Fill in the studio and titleID in Settings
-- Set Request type to Unity www
+- Set Request type to "Unitywww"
 - In Settings/API, enable Client/Entity/Server API
 
 ### Define ENABLE_PLAYFABSERVER_API in the project settings
