@@ -25,7 +25,7 @@ namespace FishingCactus.PlayFabIntegration
 
         private void Start()
         {
-            if (Config.buildType == BuildType.REMOTE_SERVER)
+            if (Config.Type == Configuration.BuildType.REMOTE_SERVER)
             {
                 Debug.LogWarning("[SERVER STARTUP] BEGIN OF REMOTE SERVER");
                 StartRemoteServer();
@@ -34,7 +34,7 @@ namespace FishingCactus.PlayFabIntegration
 
         private void OnDisable()
         {
-            if (Config.buildType == BuildType.REMOTE_SERVER)
+            if (Config.Type == Configuration.BuildType.REMOTE_SERVER)
             {
                 //CleanUpRemoteServer();
             }

@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using PlayFab.MultiplayerAgent.Model;
 using Mirror;
+using FishingCactus.PlayFabIntegration;
 
 public class ServerStartUp : MonoBehaviour
 {
@@ -27,12 +28,12 @@ public class ServerStartUp : MonoBehaviour
 
     private void Start()
     {
-        switch (Room.Config.buildType)
+        switch (Room.Config.Type)
         {
-            case BuildType.LOCAL_SERVER:
+            case Configuration.BuildType.LOCAL_SERVER:
                 StartLocalServer();
                 break;
-            case BuildType.REMOTE_SERVER:
+            case Configuration.BuildType.REMOTE_SERVER:
                 StartRemoteServer();
                 break;
             default:
@@ -42,7 +43,7 @@ public class ServerStartUp : MonoBehaviour
 
     private void OnDisable()
     {
-        if (Room.Config.buildType == BuildType.REMOTE_SERVER)
+        if (Room.Config.Type == Configuration.BuildType.REMOTE_SERVER)
         {
             CleanUpRemoteServer();
         }

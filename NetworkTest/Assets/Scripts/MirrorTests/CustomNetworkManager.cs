@@ -5,6 +5,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using FishingCactus.PlayFabIntegration;
 
 public class CustomNetworkManager : NetworkManager
 {
@@ -59,7 +60,7 @@ public class CustomNetworkManager : NetworkManager
         if (uconn == null)
         {
             string LobbyID = "";
-            if (_configuration.buildType == BuildType.REMOTE_SERVER)
+            if (_configuration.Type == Configuration.BuildType.REMOTE_SERVER)
             {
                 LobbyID = PlayFabMultiplayerAgentAPI.SessionConfig.SessionId;
             }

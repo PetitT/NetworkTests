@@ -1,0 +1,12 @@
+{
+  "name": "com.fishingcactus.usafu",
+  "displayName": "USAFU",
+  "version": "1.4.1",
+  "unity": "2019.3",
+  "description": "Users, Saving, Achievements for Unity",
+  "dependencies": {
+		"com.fishingcactus.usafu": "1.4.0",
+		"com.unity.xr.oculus" : "3.0.2"
+	},
+  "type": "library"
+}

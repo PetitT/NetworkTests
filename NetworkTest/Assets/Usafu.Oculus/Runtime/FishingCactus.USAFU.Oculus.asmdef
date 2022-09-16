@@ -1,0 +1,17 @@
+{
+    "name": "FishingCactus.USAFU.Oculus",
+    "rootNamespace": "",
+    "references": [
+        "GUID:7086b7884a5e95541a3901d50e276517",
+        "GUID:08ce02361622c7d4f8dbeae2b843a0e4"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
