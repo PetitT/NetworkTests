@@ -23,8 +23,8 @@ new
                 {
                 	region = "NorthEurope",
                         latency = 100
-                 }
-         }
+                }
+        }
  }
 ```
 ### Upload a server build
