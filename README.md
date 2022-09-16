@@ -25,7 +25,7 @@ new
                         latency = 100
                 }
         }
- }
+}
 ```
 ### Upload a server build
 - Set the build type in the PlayFabConfiguration asset as "REMOTE_SERVER"
