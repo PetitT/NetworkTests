@@ -14,8 +14,8 @@ public class CustomNetworkManager : NetworkManager
 
     public List<UnityNetworkConnection> Connections { get; set; }
 
-    [SerializeField] Configuration _configuration = default;
-    public Configuration Config
+    [SerializeField] CustomPlayFabSettings _configuration = default;
+    public CustomPlayFabSettings Config
     {
         get
         {
@@ -60,7 +60,7 @@ public class CustomNetworkManager : NetworkManager
         if (uconn == null)
         {
             string LobbyID = "";
-            if (_configuration.Type == Configuration.BuildType.REMOTE_SERVER)
+            if (_configuration.Type == CustomPlayFabSettings.BuildType.REMOTE_SERVER)
             {
                 LobbyID = PlayFabMultiplayerAgentAPI.SessionConfig.SessionId;
             }

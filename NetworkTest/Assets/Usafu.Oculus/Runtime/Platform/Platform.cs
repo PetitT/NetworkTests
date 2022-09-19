@@ -58,6 +58,7 @@ namespace FishingCactus.Platform
 
         public override void Dispose()
         {
+            _isInitialized = false;
         }
     }
 }

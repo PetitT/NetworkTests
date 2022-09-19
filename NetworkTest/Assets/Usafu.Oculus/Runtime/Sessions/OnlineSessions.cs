@@ -38,25 +38,28 @@ namespace FishingCactus.OnlineSessions
         {
             var options = new Oculus.Platform.GroupPresenceOptions();
             options.SetIsJoinable(session_settings.AllowJoinViaPresence);
-            options.SetDestinationApiName(session_name);
-            options.SetLobbySessionId(Guid.NewGuid().ToString());
-            options.SetMatchSessionId("my_match");
-            Oculus.Platform.GroupPresence.Set(options);
+            options.SetDestinationApiName("game_lobby");
+            options.SetLobbySessionId(session_name);
+            options.SetMatchSessionId("Lobby");
+            Oculus.Platform.GroupPresence.Set(options).OnComplete(
+                (message) =>
+                {
+                    OnSetGroupPresence(message, session_name);
+                });
 
+            return Task.FromResult(true);
+        }
 
-
-
-            if ( sessionMap.ContainsKey( session_name ) )
+        private void OnSetGroupPresence(Oculus.Platform.Message message, string session_name)
+        {
+            if (!message.IsError)
             {
-                return Task.FromResult( false );
+                OnCreateSessionComplete?.Invoke(session_name, true);
             }
-
-            var named_online_session = new NamedOnlineSession( session_name, session_settings );
-            named_online_session.SessionInfo = new OnlineSessioInfo();
-
-            sessionMap.Add( session_name, named_online_session );
-
-            return Task.FromResult( true );
+            else
+            {
+                OnCreateSessionComplete?.Invoke(session_name, true);
+            }
         }
 
         public Task< bool > StartSession( string session_name )
@@ -71,10 +74,7 @@ namespace FishingCactus.OnlineSessions
 
         public Task<bool> EndSession( string session_name )
         {
-            if ( sessionMap.ContainsKey( session_name ) )
-            {
-                return Task.FromResult( false );
-            }
+            Oculus.Platform.GroupPresence.Clear();
 
             return Task.FromResult( true );
         }
@@ -117,6 +117,8 @@ namespace FishingCactus.OnlineSessions
 
         public Task<bool> SendSessionInviteToFriends( IUniqueUserId user_id, IReadOnlyList<IUniqueUserId> friend_ids, string session_name )
         {
+            USAFUCore.Get().ExternalUI.ShowInviteUI(USAFUCore.Get().UserSystem.GetUniqueUserId(0), session_name);
+
             return Task.FromResult( true );
         }
 

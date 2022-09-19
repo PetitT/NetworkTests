@@ -20,12 +20,12 @@ namespace FishingCactus.PlayFabIntegration
         private List<ConnectedPlayer> _connectedPlayers; //A list of players that is sent to keep playfab updated, don't use it for gameplay
         public NetworkRunner runner;
 
-        public Configuration Config;
+        public CustomPlayFabSettings Config;
         string sessionID;
 
         private void Start()
         {
-            if (Config.Type == Configuration.BuildType.REMOTE_SERVER)
+            if (Config.Type == CustomPlayFabSettings.BuildType.REMOTE_SERVER)
             {
                 Debug.LogWarning("[SERVER STARTUP] BEGIN OF REMOTE SERVER");
                 StartRemoteServer();
@@ -34,7 +34,7 @@ namespace FishingCactus.PlayFabIntegration
 
         private void OnDisable()
         {
-            if (Config.Type == Configuration.BuildType.REMOTE_SERVER)
+            if (Config.Type == CustomPlayFabSettings.BuildType.REMOTE_SERVER)
             {
                 //CleanUpRemoteServer();
             }

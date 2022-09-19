@@ -30,10 +30,10 @@ public class ServerStartUp : MonoBehaviour
     {
         switch (Room.Config.Type)
         {
-            case Configuration.BuildType.LOCAL_SERVER:
+            case CustomPlayFabSettings.BuildType.LOCAL_SERVER:
                 StartLocalServer();
                 break;
-            case Configuration.BuildType.REMOTE_SERVER:
+            case CustomPlayFabSettings.BuildType.REMOTE_SERVER:
                 StartRemoteServer();
                 break;
             default:
@@ -43,7 +43,7 @@ public class ServerStartUp : MonoBehaviour
 
     private void OnDisable()
     {
-        if (Room.Config.Type == Configuration.BuildType.REMOTE_SERVER)
+        if (Room.Config.Type == CustomPlayFabSettings.BuildType.REMOTE_SERVER)
         {
             CleanUpRemoteServer();
         }

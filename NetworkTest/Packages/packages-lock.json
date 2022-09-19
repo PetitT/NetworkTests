@@ -1,12 +1,5 @@
 {
   "dependencies": {
-    "com.fishingcactus.unityplayfab": {
-      "version": "https://github.com/FishingCactus/UnityPlayFab.git#InitialImplementation",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "8a0168ff5c1e4954818516ee2eb52a85701c9885"
-    },
     "com.fishingcactus.usafu": {
       "version": "https://github.com/USAFU/USAFU.git",
       "depth": 0,

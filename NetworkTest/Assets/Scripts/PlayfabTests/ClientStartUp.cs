@@ -22,7 +22,7 @@ public class ClientStartUp : MonoBehaviour
 
     void Start()
     {
-        if (Room.Config.Type == Configuration.BuildType.CLIENT)
+        if (Room.Config.Type == CustomPlayFabSettings.BuildType.CLIENT)
         {
             _room.OnPlayerAdded += OnConnected;
             _room.OnPlayerRemoved += OnDisconnected;
