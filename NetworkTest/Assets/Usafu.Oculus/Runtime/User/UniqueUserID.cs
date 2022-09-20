@@ -2,9 +2,9 @@
 {
     public class UniqueUserId : IUniqueUserId
     {
-        private static readonly int _invalidUserId = -1;
+        private static readonly ulong _invalidUserId = 0;
 
-        public int UniqueId { get; }
+        public ulong UniqueId { get; }
 
         public bool IsValid => UniqueId != _invalidUserId;
 
@@ -13,7 +13,7 @@
             UniqueId = _invalidUserId;
         }
 
-        public UniqueUserId( int value )
+        public UniqueUserId( ulong value )
         {
             UniqueId = value;
         }

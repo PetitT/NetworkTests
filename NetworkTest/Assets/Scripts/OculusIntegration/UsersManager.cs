@@ -17,7 +17,7 @@ namespace OculusIntegration
         public void InitializeLoggedInUserInfo(Action<User> onResult = null)
         {
             onGotLoggedInUser = onResult;
-            Users.GetLoggedInUser().OnComplete(OnGotLoggedInUser); //Only returns the UserID, we need to call Users.Get to have all info 
+            Users.GetLoggedInUser().OnComplete(OnGotLoggedInUser); //Only returns the UserID, we need to call Users.Get to have all info  
         }
 
         private void OnGotLoggedInUser(Message<User> message)
@@ -30,6 +30,7 @@ namespace OculusIntegration
             }
 
             UserID = message.Data.ID;
+            Debug.Log($"Found user : ID is {UserID}");
             Users.Get(UserID).OnComplete(OnGotSelfUser); 
         }
 

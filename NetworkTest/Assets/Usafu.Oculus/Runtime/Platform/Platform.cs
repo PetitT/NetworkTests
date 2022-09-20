@@ -1,5 +1,6 @@
 using FishingCactus.Setup;
 using System;
+using UnityEngine;
 
 [assembly: UnityEngine.Scripting.Preserve]
 [assembly: UnityEngine.Scripting.AlwaysLinkAssembly]
@@ -24,7 +25,12 @@ namespace FishingCactus.Platform
                 {
                     if ( !message.IsError )
                     {
-                        CheckEntitlement();
+                        Util.Logger.Log(Util.LogLevel.Info, "Oculus Core initialized");
+#if !UNITY_EDITOR
+                        CheckEntitlement(); 
+#else
+                        _isInitialized = true;
+#endif
                     }
                     else
                     {
@@ -42,9 +48,9 @@ namespace FishingCactus.Platform
             Oculus.Platform.Entitlements.IsUserEntitledToApplication().OnComplete(
                 ( message ) =>
                 {
-                    if( !message.IsError )
+                    if( !message.IsError)
                     {
-                        _isInitialized = true;
+                        Util.Logger.Log(Util.LogLevel.Info, "User is entitled to the application");
                     }
                     else
                     {
@@ -53,9 +59,12 @@ namespace FishingCactus.Platform
                         Application.Quit();
 #endif
                     }
+
+                    _isInitialized = true;
+                    
                 });
         }
-
+        
         public override void Dispose()
         {
             _isInitialized = false;

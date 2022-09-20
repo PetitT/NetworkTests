@@ -15,11 +15,12 @@ namespace FishingCactus.ExternalUI
             });
         }
 
-        public override Task<bool> ShowInviteUI(IUniqueUserId user_id, string session_name)
+        public override Task<bool> ShowInviteUI( IUniqueUserId user_id, string session_name )
         {
+            Util.Logger.Log(Util.LogLevel.Info, "Displaying Invite UI");
             var options = new Oculus.Platform.InviteOptions();
-            Oculus.Platform.GroupPresence.LaunchInvitePanel(options);
-            return Task.FromResult(true);
+            Oculus.Platform.GroupPresence.LaunchInvitePanel( options );
+            return Task.FromResult( true );
         }
     }
 }

@@ -31,11 +31,13 @@ namespace FishingCactus.OnlineSessions
 #pragma warning restore CS0067 // The event 'event' is never used
         public void Initialize( Settings settings )
         {
-            sessionMap.Clear();
+
         }
 
-        public Task< bool > CreateSession( IUniqueUserId user_id, string session_name, OnlineSessionSettings session_settings )
+        public Task<bool> CreateSession( IUniqueUserId user_id, string session_name, OnlineSessionSettings session_settings )
         {
+            var taskCompletionSource = new TaskCompletionSource<bool>();
+
             var options = new Oculus.Platform.GroupPresenceOptions();
             options.SetIsJoinable(session_settings.AllowJoinViaPresence);
             options.SetDestinationApiName("game_lobby");
@@ -44,49 +46,33 @@ namespace FishingCactus.OnlineSessions
             Oculus.Platform.GroupPresence.Set(options).OnComplete(
                 (message) =>
                 {
-                    OnSetGroupPresence(message, session_name);
+                    bool createdSession = false;
+                    if (!message.IsError)
+                    {
+                        createdSession = true;
+                    }
+
+                    OnCreateSessionComplete?.Invoke(session_name, createdSession);
+                    taskCompletionSource.TrySetResult(createdSession);
                 });
 
-            return Task.FromResult(true);
+            return taskCompletionSource.Task;
         }
 
-        private void OnSetGroupPresence(Oculus.Platform.Message message, string session_name)
+        public Task<bool> StartSession( string session_name )
         {
-            if (!message.IsError)
-            {
-                OnCreateSessionComplete?.Invoke(session_name, true);
-            }
-            else
-            {
-                OnCreateSessionComplete?.Invoke(session_name, true);
-            }
-        }
-
-        public Task< bool > StartSession( string session_name )
-        {
-            if ( !sessionMap.ContainsKey( session_name ) )
-            {
-                return Task.FromResult( false );
-            }
-
             return Task.FromResult( true );
         }
 
         public Task<bool> EndSession( string session_name )
         {
             Oculus.Platform.GroupPresence.Clear();
-
+            OnEndSessionComplete?.Invoke(session_name, true);
             return Task.FromResult( true );
         }
 
-        public Task< bool > DestroySession( string session_name )
+        public Task<bool> DestroySession( string session_name )
         {
-            if ( !sessionMap.ContainsKey( session_name ) )
-            {
-                return Task.FromResult( false );
-            }
-
-            sessionMap.Remove( session_name );
             return Task.FromResult( true );
         }
 
@@ -97,11 +83,6 @@ namespace FishingCactus.OnlineSessions
 
         public NamedOnlineSession GetNamedSession( string session_name )
         {
-            if ( sessionMap.TryGetValue( session_name, out NamedOnlineSession named_online_session ) )
-            {
-                return named_online_session;
-            }
-
             return null;
         }
 
@@ -117,16 +98,14 @@ namespace FishingCactus.OnlineSessions
 
         public Task<bool> SendSessionInviteToFriends( IUniqueUserId user_id, IReadOnlyList<IUniqueUserId> friend_ids, string session_name )
         {
-            USAFUCore.Get().ExternalUI.ShowInviteUI(USAFUCore.Get().UserSystem.GetUniqueUserId(0), session_name);
+            USAFUCore.Get().ExternalUI.ShowInviteUI( USAFUCore.Get().UserSystem.GetUniqueUserId(0), session_name );
 
             return Task.FromResult( true );
         }
 
-        public Task< SessionInvitation > ConsumeSessionInvitation()
+        public Task<SessionInvitation> ConsumeSessionInvitation()
         { 
             return Task.FromResult< SessionInvitation >( null );
         }
-
-        private readonly Dictionary< string, NamedOnlineSession > sessionMap = new Dictionary<string, NamedOnlineSession>();
     }
 }
