@@ -11,13 +11,13 @@ namespace FishingCactus.ExternalUI
             {
                 Success = true,
                 UserId = new UniqueUserId(),
-                ControllerId = controller_id 
-            });
+                ControllerId = controller_id
+            } );
         }
 
         public override Task<bool> ShowInviteUI( IUniqueUserId user_id, string session_name )
         {
-            Util.Logger.Log(Util.LogLevel.Info, "Displaying Invite UI");
+            Util.Logger.Log( Util.LogLevel.Info, "Displaying Invite UI" );
             var options = new Oculus.Platform.InviteOptions();
             Oculus.Platform.GroupPresence.LaunchInvitePanel( options );
             return Task.FromResult( true );

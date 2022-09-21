@@ -3,6 +3,7 @@ using FishingCactus.User;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Oculus.Platform;
 
 namespace FishingCactus.OnlineSessions
 {
@@ -31,43 +32,83 @@ namespace FishingCactus.OnlineSessions
 #pragma warning restore CS0067 // The event 'event' is never used
         public void Initialize( Settings settings )
         {
-
         }
 
         public Task<bool> CreateSession( IUniqueUserId user_id, string session_name, OnlineSessionSettings session_settings )
         {
+            Util.Logger.Log( Util.LogLevel.Info, "Creating session" );
+            var options = new GroupPresenceOptions();
+            options.SetIsJoinable( true );
+            return JoinGroupPresence( options, session_name );
+        }
+
+        public Task<bool> JoinSession( IUniqueUserId user_id, string session_name, OnlineSessionSearchResult desired_session )
+        {
+            Util.Logger.Log( Util.LogLevel.Info, "Joining session" );
+            return JoinGroupPresence( new GroupPresenceOptions(), session_name );
+        }
+
+        private Task<bool> JoinGroupPresence( GroupPresenceOptions options, string session_name )
+        {
             var taskCompletionSource = new TaskCompletionSource<bool>();
 
-            var options = new Oculus.Platform.GroupPresenceOptions();
-            options.SetIsJoinable(session_settings.AllowJoinViaPresence);
-            options.SetDestinationApiName("game_lobby");
-            options.SetLobbySessionId(session_name);
-            options.SetMatchSessionId("Lobby");
-            Oculus.Platform.GroupPresence.Set(options).OnComplete(
-                (message) =>
+            options.SetDestinationApiName( USAFUCore.Get().Settings.Oculus.DestinationApiName );
+            options.SetLobbySessionId( session_name );
+
+            GroupPresence.Set( options ).OnComplete(
+                ( message ) =>
                 {
                     bool createdSession = false;
-                    if (!message.IsError)
+                    if( !message.IsError )
                     {
+                        Util.Logger.Log( Util.LogLevel.Info, "Set group presence" );
                         createdSession = true;
                     }
+                    else
+                    {
+                        Util.Logger.Log( Util.LogLevel.Error, $"Failed to set group presence. Error code : {message.GetError().Code}" );
+                    }
 
-                    OnCreateSessionComplete?.Invoke(session_name, createdSession);
-                    taskCompletionSource.TrySetResult(createdSession);
-                });
+                    taskCompletionSource.TrySetResult( createdSession );
+                } );
 
             return taskCompletionSource.Task;
         }
 
-        public Task<bool> StartSession( string session_name )
+        public Task<bool> EndSession( string session_name )
         {
+            Util.Logger.Log( Util.LogLevel.Info, "Leaving session" );
+            var taskCompletionSource = new TaskCompletionSource<bool>();
+            GroupPresence.Clear().OnComplete(
+              ( message ) =>
+              {
+                  bool leftSession = false;
+                  if( !message.IsError )
+                  {
+                      Util.Logger.Log( Util.LogLevel.Info, "Left session" );
+                      leftSession = true;
+                  }
+                  else
+                  {
+                      Util.Logger.Log( Util.LogLevel.Error, $"Failed to leave session. Error : {message.GetError().Message}" );
+                  }
+
+                  taskCompletionSource.TrySetResult( leftSession );
+                  OnEndSessionComplete?.Invoke( session_name, leftSession );
+              } );
+
+            return taskCompletionSource.Task;
+        }
+
+        public Task<bool> SendSessionInviteToFriends( IUniqueUserId user_id, IReadOnlyList<IUniqueUserId> friend_ids, string session_name )
+        {
+            Util.Logger.Log( Util.LogLevel.Info, "Sending invite to friends" );
+            USAFUCore.Get().ExternalUI.ShowInviteUI( USAFUCore.Get().UserSystem.GetUniqueUserId( 0 ), session_name );
             return Task.FromResult( true );
         }
 
-        public Task<bool> EndSession( string session_name )
+        public Task<bool> StartSession( string session_name )
         {
-            Oculus.Platform.GroupPresence.Clear();
-            OnEndSessionComplete?.Invoke(session_name, true);
             return Task.FromResult( true );
         }
 
@@ -76,16 +117,11 @@ namespace FishingCactus.OnlineSessions
             return Task.FromResult( true );
         }
 
-        public Task<bool> JoinSession( IUniqueUserId user_id, string session_name, OnlineSessionSearchResult desired_session )
-        {
-            return Task.FromResult( true );
-        }
-
         public NamedOnlineSession GetNamedSession( string session_name )
         {
             return null;
         }
-
+ 
         public Task<Tuple<bool, OnlineSessionSearchResult>> FindSessionById( IUniqueUserId user_id, string session_id, IUniqueUserId friend_id )
         {
             return Task.FromResult( new Tuple<bool, OnlineSessionSearchResult>( false, null ) );
@@ -96,16 +132,9 @@ namespace FishingCactus.OnlineSessions
             return Task.FromResult( new Tuple<bool, OnlineSessionSearchResult>( false, null ) );
         }
 
-        public Task<bool> SendSessionInviteToFriends( IUniqueUserId user_id, IReadOnlyList<IUniqueUserId> friend_ids, string session_name )
-        {
-            USAFUCore.Get().ExternalUI.ShowInviteUI( USAFUCore.Get().UserSystem.GetUniqueUserId(0), session_name );
-
-            return Task.FromResult( true );
-        }
-
         public Task<SessionInvitation> ConsumeSessionInvitation()
-        { 
-            return Task.FromResult< SessionInvitation >( null );
+        {
+            return Task.FromResult<SessionInvitation>( null );
         }
     }
 }

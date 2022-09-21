@@ -7,7 +7,9 @@ namespace FishingCactus.User
     {
         public string DisplayName { get => _displayName; }
         public string RealName { get => string.Empty; }
-        public IUniqueUserId UserId{ get => userId; }
+        public IUniqueUserId UserId { get => userId; }
+
+        private IUniqueUserId userId;
 
         private string _displayName;
 
@@ -16,13 +18,13 @@ namespace FishingCactus.User
             userId = user_id;
         }
 
-        public UserOnlineAccount( IUniqueUserId user_id, string display_name)
+        public UserOnlineAccount( IUniqueUserId user_id, string display_name )
         {
             userId = user_id;
             _displayName = display_name;
         }
 
-        public Task< string > GetAccessToken( IAccessTokenRequestInfos request_infos = null )
+        public Task<string> GetAccessToken( IAccessTokenRequestInfos request_infos = null )
         {
             return Task.FromResult( string.Empty );
         }
@@ -42,6 +44,5 @@ namespace FishingCactus.User
             throw new NotImplementedException();
         }
 
-        private IUniqueUserId userId;
     }
 }

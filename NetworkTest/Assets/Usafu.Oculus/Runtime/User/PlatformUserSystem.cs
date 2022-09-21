@@ -14,15 +14,15 @@ namespace FishingCactus.User
 
         public Task<LoginResult> Login( int controller_id )
         {
-            Util.Logger.Log(Util.LogLevel.Info, "Logging in");
+            Util.Logger.Log( Util.LogLevel.Info, "Logging in" );
             var taskCompletionSource = new TaskCompletionSource<LoginResult>();
 
             Oculus.Platform.Users.GetLoggedInUser().OnComplete(
                 ( message ) =>
                 {
-                    if ( message.IsError )
+                    if( message.IsError )
                     {
-                        Util.Logger.Log( Util.LogLevel.Warning, "Could not find logged in user" );
+                        Util.Logger.Log( Util.LogLevel.Error, $"Could not find logged in user : {message.GetError().Message}" );
                         uniquerUserID = new UniqueUserId();
                         userOnlineAccount = new UserOnlineAccount( uniquerUserID );
                         LoginResult result = new LoginResult( ELoginResult.Failed, uniquerUserID, message.GetError().ToString() );
@@ -33,41 +33,39 @@ namespace FishingCactus.User
                         Util.Logger.Log( Util.LogLevel.Info, "Found logged in user" );
                         ulong userID = message.Data.ID;
                         uniquerUserID = new UniqueUserId( userID );
+
                         //NOTE: Calling Users.GetLoggedInUser only returns the UserID,
                         //We must call Users.Get with the userID to get all user data
-                        LoginResult result = new LoginResult(ELoginResult.SuccessOnlineProfile, uniquerUserID, "");
-                        taskCompletionSource.TrySetResult(result);
+                        Users.Get( userID ).OnComplete(
+                            ( message ) =>
+                            {
+                                string player_name = "";
+                                string error_message = "";
+                                ELoginResult result = ELoginResult.Failed;
 
-                        //Oculus.Platform.Users.Get(userID).OnComplete(
-                        //    (message) =>
-                        //    {
-                        //        string player_name = "";
-                        //        string error_message = "";
-                        //        ELoginResult result = ELoginResult.Failed;
+                                if( message.IsError )
+                                {
+                                    error_message = message.GetError().Message;
+                                    Util.Logger.Log( Util.LogLevel.Warning, $"Could not find user : {error_message}" );
+                                }
+                                else
+                                {
+                                    Util.Logger.Log( Util.LogLevel.Info, "Found local user" );
+                                    player_name = message.Data.DisplayName;
+                                    result = ELoginResult.SuccessLocalProfile;
+                                }
 
-                        //        if (!message.IsError)
-                        //        {
-                        //            Util.Logger.Log(Util.LogLevel.Info, "Found local user");
-                        //            player_name = message.Data.DisplayName;
-                        //            result = ELoginResult.SuccessLocalProfile;
-                        //        }
-                        //        else
-                        //        {
-                        //            Util.Logger.Log(Util.LogLevel.Warning, "Could not find user");
-                        //            error_message = message.GetError().ToString();
-                        //        }
-
-                        //        userOnlineAccount = new UserOnlineAccount(uniquerUserID, player_name);
-                        //        LoginResult loginResult = new LoginResult(result, uniquerUserID, error_message);
-                        //        taskCompletionSource.TrySetResult( loginResult );
-                        //    });
+                                userOnlineAccount = new UserOnlineAccount( uniquerUserID, player_name );
+                                LoginResult loginResult = new LoginResult( result, uniquerUserID, error_message );
+                                taskCompletionSource.TrySetResult( loginResult );
+                            } );
                     }
-                });
+                } );
 
-            return taskCompletionSource.Task; 
+            return taskCompletionSource.Task;
         }
 
-        public Task< bool > Logout( int controller_id )
+        public Task<bool> Logout( int controller_id )
         {
             return Task.FromResult( true );
         }
@@ -77,9 +75,9 @@ namespace FishingCactus.User
             return userOnlineAccount;
         }
 
-        public IReadOnlyList< IUserOnlineAccount > GetAllUserAccounts()
+        public IReadOnlyList<IUserOnlineAccount> GetAllUserAccounts()
         {
-            return new ReadOnlyCollection< IUserOnlineAccount >( new List< IUserOnlineAccount > { userOnlineAccount } );
+            return new ReadOnlyCollection<IUserOnlineAccount>( new List<IUserOnlineAccount> { userOnlineAccount } );
         }
 
         public IUniqueUserId GetUniqueUserId( int controller_id )
@@ -101,7 +99,7 @@ namespace FishingCactus.User
         {
             return GetLoginStatus( 0 );
         }
-        
+
         public ELoginStatus GetLoginStatus( int controller_id )
         {
             return ELoginStatus.UsingLocalProfile;
@@ -112,19 +110,19 @@ namespace FishingCactus.User
             return userOnlineAccount.DisplayName;
         }
 
-        public Task< EUserPrivilegesResult > GetUserPrivilege( IUniqueUserId user_id, EUserPrivileges privilege )
+        public Task<EUserPrivilegesResult> GetUserPrivilege( IUniqueUserId user_id, EUserPrivileges privilege )
         {
             return Task.FromResult( EUserPrivilegesResult.NoFailures );
         }
 
         public void Initialize( Settings settings )
         {
-            
+
         }
 
-        public Task<GetUserAvatarResult> GetUserAvatar(IUniqueUserId user_id, AvatarSize avatar_size)
+        public Task<GetUserAvatarResult> GetUserAvatar( IUniqueUserId user_id, AvatarSize avatar_size )
         {
-            return Task.FromResult(new GetUserAvatarResult { Success = false, Avatar = null });
+            return Task.FromResult( new GetUserAvatarResult { Success = false, Avatar = null } );
         }
 
 #pragma warning disable CS0067 // The event 'event' is never used

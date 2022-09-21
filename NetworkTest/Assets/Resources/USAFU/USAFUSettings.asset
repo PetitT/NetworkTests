@@ -47,3 +47,6 @@ MonoBehaviour:
     ClientId: 
     ClientSecret: 
     SuspendOnUnfocus: 0
+  Oculus:
+    ApplicationId: 4747510512016317
+    DestinationApiName: lobby_scene
