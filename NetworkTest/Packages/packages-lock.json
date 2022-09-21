@@ -7,13 +7,6 @@
       "dependencies": {},
       "hash": "0673a680c025bda4b3175eaaa7e50e29d032be00"
     },
-    "com.fishingcactus.usafu": {
-      "version": "https://github.com/USAFU/USAFU.git",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "c677c174180ca6d98b92bf38ba09f0feacc332f8"
-    },
     "com.unity.collab-proxy": {
       "version": "1.15.18",
       "depth": 0,
