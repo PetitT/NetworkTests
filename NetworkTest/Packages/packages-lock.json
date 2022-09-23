@@ -1,12 +1,5 @@
 {
   "dependencies": {
-    "com.fishingcactus.unityplayfab": {
-      "version": "https://github.com/FishingCactus/UnityPlayFab.git#InitialImplementation",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "0673a680c025bda4b3175eaaa7e50e29d032be00"
-    },
     "com.unity.collab-proxy": {
       "version": "1.15.18",
       "depth": 0,

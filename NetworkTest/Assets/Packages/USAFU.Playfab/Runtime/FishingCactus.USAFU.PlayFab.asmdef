@@ -1,0 +1,17 @@
+{
+    "name": "FishingCactus.USAFU.PlayFab",
+    "rootNamespace": "",
+    "references": [
+        "GUID:7086b7884a5e95541a3901d50e276517",
+        "GUID:1b1d867b44da1084fabb8861d4a0dccd"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -3,7 +3,7 @@
     "m_SelectedPackage": {
         "deviceId": "1WMHH841Z10482",
         "name": "com.LowTeeGames.Networktest",
-        "processId": 21170,
+        "processId": 13024,
         "exited": false
     },
     "m_SelectedPriority": 0,
@@ -11,139 +11,67 @@
         {
             "deviceId": "1WMHH841Z10482",
             "name": "com.LowTeeGames.Networktest",
-            "processId": 15291,
-            "exited": true
-        },
-        {
-            "deviceId": "1WMHH841Z10482",
-            "name": "com.LowTeeGames.Networktest",
-            "processId": 15791,
-            "exited": true
-        },
-        {
-            "deviceId": "1WMHH841Z10482",
-            "name": "com.LowTeeGames.Networktest",
-            "processId": 16559,
-            "exited": true
-        },
-        {
-            "deviceId": "1WMHH841Z10482",
-            "name": "com.LowTeeGames.Networktest",
-            "processId": 17391,
-            "exited": true
-        },
-        {
-            "deviceId": "1WMHH841Z10482",
-            "name": "com.LowTeeGames.Networktest",
-            "processId": 5596,
-            "exited": false
-        },
-        {
-            "deviceId": "1WMHH841Z10482",
-            "name": "com.LowTeeGames.Networktest",
-            "processId": 6299,
-            "exited": false
-        },
-        {
-            "deviceId": "1WMHH841Z10482",
-            "name": "com.LowTeeGames.Networktest",
-            "processId": 7138,
-            "exited": false
-        },
-        {
-            "deviceId": "1WMHH841Z10482",
-            "name": "com.LowTeeGames.Networktest",
-            "processId": 7843,
-            "exited": false
-        },
-        {
-            "deviceId": "1WMHH841Z10482",
-            "name": "com.LowTeeGames.Networktest",
-            "processId": 8300,
-            "exited": false
-        },
-        {
-            "deviceId": "1WMHH841Z10482",
-            "name": "com.LowTeeGames.Networktest",
-            "processId": 9394,
-            "exited": false
-        },
-        {
-            "deviceId": "1WMHH841Z10482",
-            "name": "com.LowTeeGames.Networktest",
-            "processId": 10049,
-            "exited": false
-        },
-        {
-            "deviceId": "1WMHH841Z10482",
-            "name": "com.LowTeeGames.Networktest",
-            "processId": 10667,
-            "exited": false
-        },
-        {
-            "deviceId": "1WMHH841Z10482",
-            "name": "com.LowTeeGames.Networktest",
-            "processId": 11318,
-            "exited": false
-        },
-        {
-            "deviceId": "1WMHH841Z10482",
-            "name": "com.LowTeeGames.Networktest",
-            "processId": 12183,
-            "exited": false
-        },
-        {
-            "deviceId": "1WMHH841Z10482",
-            "name": "com.LowTeeGames.Networktest",
-            "processId": 12886,
-            "exited": false
-        },
-        {
-            "deviceId": "1WMHH841Z10482",
-            "name": "com.LowTeeGames.Networktest",
-            "processId": 13489,
-            "exited": false
-        },
-        {
-            "deviceId": "1WMHH841Z10482",
-            "name": "com.LowTeeGames.Networktest",
-            "processId": 14302,
-            "exited": false
-        },
-        {
-            "deviceId": "1WMHH841Z10482",
-            "name": "com.LowTeeGames.Networktest",
-            "processId": 14927,
-            "exited": false
-        },
-        {
-            "deviceId": "1WMHH841Z10482",
-            "name": "com.LowTeeGames.Networktest",
-            "processId": 15991,
-            "exited": false
-        },
-        {
-            "deviceId": "1WMHH841Z10482",
-            "name": "com.LowTeeGames.Networktest",
-            "processId": 16775,
-            "exited": false
-        },
-        {
-            "deviceId": "1WMHH841Z10482",
-            "name": "com.LowTeeGames.Networktest",
             "processId": 17373,
-            "exited": false
+            "exited": true
         },
         {
             "deviceId": "1WMHH841Z10482",
             "name": "com.LowTeeGames.Networktest",
             "processId": 18461,
-            "exited": false
+            "exited": true
         },
         {
             "deviceId": "1WMHH841Z10482",
             "name": "com.LowTeeGames.Networktest",
             "processId": 21170,
+            "exited": true
+        },
+        {
+            "deviceId": "1WMHH841Z10482",
+            "name": "com.LowTeeGames.Networktest",
+            "processId": 6850,
+            "exited": true
+        },
+        {
+            "deviceId": "1WMHH841Z10482",
+            "name": "com.oculus.xrstreamingclient",
+            "processId": 4219,
+            "exited": false
+        },
+        {
+            "deviceId": "1WMHH841Z10482",
+            "name": "com.LowTeeGames.Networktest",
+            "processId": 8635,
+            "exited": false
+        },
+        {
+            "deviceId": "1WMHH841Z10482",
+            "name": "com.LowTeeGames.Networktest",
+            "processId": 10063,
+            "exited": false
+        },
+        {
+            "deviceId": "1WMHH841Z10482",
+            "name": "com.LowTeeGames.Networktest",
+            "processId": 10909,
+            "exited": false
+        },
+        {
+            "deviceId": "1WMHH841Z10482",
+            "name": "com.LowTeeGames.Networktest",
+            "processId": 12077,
+            "exited": false
+        },
+        {
+            "deviceId": "1WMHH841Z10482",
+            "name": "com.LowTeeGames.Networktest",
+            "processId": 12697,
+            "exited": false
+        },
+        {
+            "deviceId": "1WMHH841Z10482",
+            "name": "com.LowTeeGames.Networktest",
+            "processId": 13024,
             "exited": false
         },
         {
