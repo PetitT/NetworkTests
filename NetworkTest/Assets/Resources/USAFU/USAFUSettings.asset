@@ -15,7 +15,6 @@ MonoBehaviour:
   UseAchievements: 0
   UseSaveSystem: 0
   UseOnlineSessions: 1
-  UseOnlineLeaderboards: 1
   RequiresOnlineServiceConnection: 0
   SaveFileExtensionWithDot: .sav
   EpicGameStore:
@@ -51,3 +50,5 @@ MonoBehaviour:
   Oculus:
     ApplicationId: 4747510512016317
     DestinationApiName: lobby_scene
+  PlayFab:
+    ConnectWithDevice: 0

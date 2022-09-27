@@ -1,4 +1,6 @@
 using Fusion;
+using Fusion.Sockets;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -11,6 +13,8 @@ public class SimplePhotonController : NetworkBehaviour
     private void Start()
     {
         ncc = GetComponent<NetworkCharacterControllerPrototype>();
+
+        NetworkRunner n = new NetworkRunner();
     }
 
     public override void FixedUpdateNetwork()

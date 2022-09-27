@@ -20,10 +20,10 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/PlayfabTest.unity
     guid: 9fc0d4010bbf28b4594072e72b8655ab
-  - enabled: 0
-    path: Assets/Scenes/UsafuTest.unity
-    guid: 26aea15befae1444fa284994ffcf7dc9
   - enabled: 1
+    path: Assets/Scenes/PlayFabUsafuTest.unity
+    guid: 26aea15befae1444fa284994ffcf7dc9
+  - enabled: 0
     path: Assets/Scenes/OculusUsafuTest.unity
     guid: 6357149e4adb56640b523209afb13571
   m_configObjects:

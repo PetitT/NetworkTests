@@ -13,7 +13,7 @@ namespace FishingCactus.User
         private IUniqueUserId userId;
 
         //Prefill all user datas on init here
-        private Dictionary<string, string> accountData;
+        private Dictionary<string, string> accountData = new Dictionary<string, string>();
 
         public UserOnlineAccount( IUniqueUserId user_id )
         {
