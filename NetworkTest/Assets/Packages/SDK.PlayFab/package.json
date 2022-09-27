@@ -1,0 +1,10 @@
+{
+  "name": "com.fishingcactus.sdk.playfab",
+  "displayName": "SDK.PlayFab",
+  "version": "2.149.220920",
+  "unity": "2020.3",
+  "description": "PlayFab SDK for Unity. Adapted for UPM",
+  "dependencies": {
+  },
+  "type": "library"
+}

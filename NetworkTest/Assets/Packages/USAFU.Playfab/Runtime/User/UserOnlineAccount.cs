@@ -12,6 +12,7 @@ namespace FishingCactus.User
 
         private IUniqueUserId userId;
 
+        //Prefill all user datas on init here
         private Dictionary<string, string> accountData;
 
         public UserOnlineAccount( IUniqueUserId user_id )
@@ -34,6 +35,7 @@ namespace FishingCactus.User
             accountData[attribute_name] = attribute_value;
             return true;
         }
+
         public Task<string> GetAccessToken( IAccessTokenRequestInfos request_infos = null )
         {
             return Task.FromResult( string.Empty );

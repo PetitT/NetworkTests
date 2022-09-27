@@ -35,26 +35,36 @@ namespace FishingCactus.OnlineSessions
 
         private PlayFab.MultiplayerModels.EntityKey multiplayerKey;
 
-        private string currentLobbyId;
-        private bool IsInALobby => !string.IsNullOrEmpty( currentLobbyId );
+        private NamedOnlineSession CurrentSession;
+
+        private OnlineSessionState CurrentSessionState; 
 
         public void Initialize( Settings settings )
         {
             sessionMap.Clear();
+            CurrentSessionState = OnlineSessionState.NoSession;
         }
 
         public Task<bool> CreateSession( IUniqueUserId user_id, string session_name, OnlineSessionSettings session_settings )
         {
-            if( IsInALobby )
+            if( CurrentSession != null )
             {
-                Log( Util.LogLevel.Error, "Already in a lobby" );
+                Log( Util.LogLevel.Warning, "Already in a lobby" );
+                OnCreateSessionComplete?.Invoke( "", false );
+                return Task.FromResult( false );
+            }
+
+            if( GetNamedSession( session_name )!= null )
+            {
+                Log( Util.LogLevel.Warning, "Session already exists" );
                 OnCreateSessionComplete?.Invoke( "", false );
                 return Task.FromResult( false );
             }
 
             Log( Util.LogLevel.Info, "Creating a lobby" );
+            CurrentSessionState = OnlineSessionState.Creating;
+            var task_completion_source = new TaskCompletionSource<bool>();
 
-            var taskCompletionSource = new TaskCompletionSource<bool>();
             var request = new CreateLobbyRequest
             {
                 Owner = GetMultiplayerEntityKey(),
@@ -67,26 +77,31 @@ namespace FishingCactus.OnlineSessions
                 request,
                 ( result ) =>
                 {
-                    currentLobbyId = result.LobbyId;
-                    OnCreateSessionComplete?.Invoke( currentLobbyId, true );
+                    CurrentSession = new NamedOnlineSession(
+                        session_name,
+                        new OnlineSession
+                        {
+                            OwningUserId = USAFUCore.Get().UserSystem.GetUniqueUserId( 0 )
+                        } );
+                    OnCreateSessionComplete?.Invoke( session_name, true );
                     Log( Util.LogLevel.Info, "Created lobby" );
-                    taskCompletionSource.TrySetResult( true );
+                    task_completion_source.TrySetResult( true );
                 },
                 ( error ) =>
                 {
                     OnCreateSessionComplete?.Invoke( "", false );
                     Log( Util.LogLevel.Error, $"Failed to create lobby : {error.GenerateErrorReport()}" );
-                    taskCompletionSource.TrySetResult( false );
+                    task_completion_source.TrySetResult( false );
                 } );
 
-            return taskCompletionSource.Task;
+            return task_completion_source.Task;
         }
 
         public Task<bool> JoinSession( IUniqueUserId user_id, string session_name, OnlineSessionSearchResult desired_session )
         {
-            if( IsInALobby )
+            if( CurrentSession != null )
             {
-                Log( Util.LogLevel.Error, "Already in a lobby" );
+                Log( Util.LogLevel.Warning, "Already in a lobby" );
                 OnJoinSessionComplete?.Invoke( "", JoinSessionCompleteResult.AlreadyInSession );
                 return Task.FromResult( false );
             }

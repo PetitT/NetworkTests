@@ -18,12 +18,12 @@ namespace FishingCactus.User
         public Task<LoginResult> Login( int controller_id )
         {
             Util.Logger.Log( Util.LogLevel.Info, "Logging in" );
-            var taskCompletionSource = new TaskCompletionSource<LoginResult>();
+            var task_completion_source = new TaskCompletionSource<LoginResult>();
 
             if( IsLoggedIn )
             {
                 Util.Logger.Log( Util.LogLevel.Error, "Already logged in" );
-                taskCompletionSource.TrySetResult( new LoginResult( ELoginResult.Failed, UserID, "Already Logged In" ) );
+                task_completion_source.TrySetResult( new LoginResult( ELoginResult.Failed, UserID, "Already Logged In" ) );
             }
 
             var request = new LoginWithCustomIDRequest
@@ -32,7 +32,8 @@ namespace FishingCactus.User
                 CreateAccount = true,
                 InfoRequestParameters = new GetPlayerCombinedInfoRequestParams
                 {
-                    GetPlayerProfile = true
+                    GetPlayerProfile = true,
+                    GetUserData = true
                 }
             };
 
@@ -49,17 +50,22 @@ namespace FishingCactus.User
                     UserAccount.SetUserAttributeByName( result.EntityToken.Entity.Id, StringConstants.ENTITY_ID );
                     UserAccount.SetUserAttributeByName( result.EntityToken.Entity.Type, StringConstants.ENTITY_TYPE );
 
-                    taskCompletionSource.TrySetResult( new LoginResult( ELoginResult.SuccessOnlineProfile, UserID, "" ) );
+                    foreach( var item in result.InfoResultPayload.UserData )
+                    {
+                        UserAccount.SetUserAttributeByName( item.Value.Value, item.Key );
+                    }
+
+                    task_completion_source.TrySetResult( new LoginResult( ELoginResult.SuccessOnlineProfile, UserID, "" ) );
                 },
                 ( error ) =>
                 {
                     Util.Logger.Log( Util.LogLevel.Error, $"Failed to login :{error.GenerateErrorReport()})" );
                     UserID = new UniqueUserId();
                     UserAccount = new UserOnlineAccount( UserID );
-                    taskCompletionSource.TrySetResult( new LoginResult( ELoginResult.Failed, UserID, error.GenerateErrorReport() ) );
+                    task_completion_source.TrySetResult( new LoginResult( ELoginResult.Failed, UserID, error.GenerateErrorReport() ) );
                 } );
 
-            return taskCompletionSource.Task;
+            return task_completion_source.Task;
         }
 
         public Task<bool> Logout( int controller_id )
