@@ -8,7 +8,7 @@ using System;
 
 public class PlayFabMatchmaking : MonoBehaviour
 {
-    public PlayFabManager manager;
+    private PlayFabManager manager;
     public string queueName = "QuickMatch";
     public int cancelDelay = 10;
 
