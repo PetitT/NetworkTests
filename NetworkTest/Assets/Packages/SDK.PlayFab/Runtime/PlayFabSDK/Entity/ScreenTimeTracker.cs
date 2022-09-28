@@ -28,7 +28,7 @@ namespace PlayFab.Public
     public class ScreenTimeTracker : IScreenTimeTracker
     {
         private Guid focusId;
-        private Guid gameSessionID = Guid.NewGuid();
+        private Guid gameSessionID;
         private bool initialFocus = true;
         private bool isSending = false;
         private DateTime focusOffDateTime = DateTime.UtcNow;

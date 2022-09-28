@@ -10,22 +10,38 @@ public class PlayFabUsafuTest : MonoBehaviour
     public string currentSessionName;
     public string currentSessionString;
     public string currentSessionValue;
+    private string connectedName = "Not Connected";
 
     private string sess = "MySession";
     private string key = "Key";
 
     private void Start()
     {
-        USAFUCore.Get().OnlineSessions.OnUpdateSessionComplete += OnlineSessions_OnUpdateSessionComplete;
+        USAFUCore.Get().OnlineSessions.OnUpdateSessionComplete += OnUpdateSession;
+        USAFUCore.Get().UserSystem.OnLoginStatusChanged += OnLoginStatusChanged;
     }
 
-    private void OnlineSessions_OnUpdateSessionComplete( string session_name, bool success )
+    private void OnLoginStatusChanged( ELoginStatus old_status, ELoginStatus new_status, IUniqueUserId new_user_id )
+    {
+        if( new_status == ELoginStatus.NotLoggedIn )
+        {
+            connectedName = "Not Connected";
+        }
+        else if( new_status == ELoginStatus.LoggedIn )
+        {
+            connectedName = USAFUCore.Get().UserSystem.GetPlayerNickname( new_user_id );
+        }
+    }
+
+    private void OnUpdateSession( string session_name, bool success )
     {
         if( !success ) { return; }
+        if( USAFUCore.Get().OnlineSessions.GetNamedSession( session_name ) == null ) { return; }
         OnlineSessionSettings settings = USAFUCore.Get().OnlineSessions.GetNamedSession( session_name ).SessionSettings;
         if( settings.Settings.ContainsKey( key ) )
         {
             currentSessionValue = settings.Settings[key].Data;
+            Debug.Log( $"Updated value to {currentSessionValue}" );
         }
     }
 
@@ -39,9 +55,9 @@ public class PlayFabUsafuTest : MonoBehaviour
 
         if( joined )
         {
-            OnlineSessionInfo info = USAFUCore.Get().OnlineSessions.GetNamedSession( sess ).SessionInfo as OnlineSessionInfo;
+            IOnlineSessionInfo info = USAFUCore.Get().OnlineSessions.GetNamedSession( sess ).SessionInfo;
             currentSessionName = sess;
-            currentSessionString = info.ConnectionString;
+            currentSessionString = USAFUCore.Get().OnlineSessions.GetNamedSession( sess ).SessionSettings.Settings[StringConstants.CONNEXION_STRING].Data;
         }
     }
 
@@ -65,14 +81,20 @@ public class PlayFabUsafuTest : MonoBehaviour
             {
                 Session = new OnlineSession
                 {
-                    SessionInfo = new OnlineSessionInfo
+                    SessionSettings = new OnlineSessionSettings
                     {
-                        ConnectionString = currentSessionString
+                        Settings = new Dictionary<string, OnlineSessionSetting>
+                        {
+                            { StringConstants.CONNEXION_STRING, new OnlineSessionSetting{ Data = currentSessionString} }
+                        }
                     }
                 }
             } );
 
-        currentSessionName = USAFUCore.Get().OnlineSessions.GetNamedSession( sess ).SessionName;
+        if( joined )
+        {
+            currentSessionName = USAFUCore.Get().OnlineSessions.GetNamedSession( sess ).SessionName;
+        }
     }
 
     private async void SetLobbyData()
@@ -83,9 +105,24 @@ public class PlayFabUsafuTest : MonoBehaviour
             {
                 Settings = new Dictionary<string, OnlineSessionSetting>
                 {
-                    { key, new OnlineSessionSetting{Data = currentSessionValue } }
+                    { key, new OnlineSessionSetting{ Data = currentSessionValue } }
                 }
             } );
+    }
+
+    private async void Join1v1Matchmaking()
+    {
+        bool completed = await USAFUCore.Get().OnlineSessions.StartMatchmaking(
+            new List<IUniqueUserId> { USAFUCore.Get().UserSystem.GetUniqueUserId( 0 ) },
+            "Simple",
+            new OnlineSessionSettings
+            {
+                Settings = new Dictionary<string, OnlineSessionSetting>
+                {
+                    { StringConstants.MATCHMAKING_TIME, new OnlineSessionSetting { Data = "30" } }
+                }
+            }
+            );
     }
 
 
@@ -95,7 +132,7 @@ public class PlayFabUsafuTest : MonoBehaviour
         if( GUI.Button( new Rect( 0, 0, 100, 50 ), "Login" ) ) { USAFUCore.Get().UserSystem.Login( 0 ); }
         if( GUI.Button( new Rect( 100, 0, 100, 50 ), "Logout" ) ) { USAFUCore.Get().UserSystem.Logout( 0 ); }
 
-        //if( GUI.Button( new Rect( 0, 0, 100, 50 ), "QuickMatch" ) ) { Join1v1Matchmaking(); }
+        if( GUI.Button( new Rect( 0, 200, 100, 50 ), "QuickMatch" ) ) { Join1v1Matchmaking(); }
         //if( GUI.Button( new Rect( 100, 0, 100, 50 ), "2vs2" ) ) { Join2v2Matchmaking(); }
         //if( GUI.Button( new Rect( 0, 100, 100, 50 ), "Add elo" ) ) { TestElo++; }
         //if( GUI.Button( new Rect( 0, 50, 175, 50 ), "Cancel all matchmaking" ) ) { playFabManager.MatchmakingManager.CancelAllMatchmakingQueuesForUser(); }
@@ -110,9 +147,11 @@ public class PlayFabUsafuTest : MonoBehaviour
         if( GUI.Button( new Rect( Screen.width - 100, 100, 100, 50 ), "Leave lobby" ) ) { LeaveCurrentLobby(); }
         if( GUI.Button( new Rect( Screen.width - 100, 150, 100, 50 ), "Set Data" ) ) { SetLobbyData(); }
         //if( GUI.Button( new Rect( Screen.width - 100, 200, 100, 50 ), "Set Lobby Name" ) ) { SetLobbyName(); };
-        //LobbyArrangementString = GUI.TextField( new Rect( Screen.width - 200, 0, 100, 25 ), LobbyArrangementString );
+        currentSessionString = GUI.TextField( new Rect( Screen.width - 200, 0, 100, 25 ), currentSessionString );
+        currentSessionValue = GUI.TextField( new Rect( Screen.width - 200, 25, 100, 25 ), currentSessionValue );
+        currentSessionName = GUI.TextField( new Rect( Screen.width - 200, 50, 100, 25 ), currentSessionName );
+        connectedName = GUI.TextField( new Rect( 0, 50, 100, 20 ), connectedName );
         //GUI.TextField( new Rect( Screen.width - 200, 25, 100, 25 ), PlayFabManager.Instance.LobbyManager.CurrentLobbyID );
-        //LobbyName = GUI.TextField( new Rect( Screen.width - 200, 50, 100, 25 ), LobbyName );
 
     }
 }

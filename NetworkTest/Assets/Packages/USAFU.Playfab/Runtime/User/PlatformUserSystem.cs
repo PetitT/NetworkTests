@@ -1,6 +1,7 @@
 ﻿using FishingCactus.Setup;
 using PlayFab;
 using PlayFab.ClientModels;
+using PlayFab.Multiplayer;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
@@ -67,6 +68,16 @@ namespace FishingCactus.User
                     {
                         UserAccount.SetUserAttributeByName( item.Value.Value, item.Key );
                     }
+
+                    PlayFabAuthenticationContext context = new PlayFabAuthenticationContext(
+                        result.SessionTicket,
+                        result.EntityToken.EntityToken,
+                        result.PlayFabId,
+                        result.EntityToken.Entity.Id,
+                        result.EntityToken.Entity.Type
+                        );
+
+                    PlayFabMultiplayer.SetEntityToken(context);
 
                     LoginStatus = ELoginStatus.LoggedIn;
                     OnLoginStatusChanged?.Invoke( ELoginStatus.NotLoggedIn, ELoginStatus.LoggedIn, UserID );

@@ -15,6 +15,7 @@ MonoBehaviour:
   UseAchievements: 0
   UseSaveSystem: 0
   UseOnlineSessions: 1
+  UseOnlineLeaderboards: 0
   RequiresOnlineServiceConnection: 0
   SaveFileExtensionWithDot: .sav
   EpicGameStore:

@@ -8,16 +8,22 @@ using System.Threading.Tasks;
 using static FishingCactus.Util.Logger;
 using static HelperFunctions;
 using System.Threading;
+using PlayFab.Multiplayer;
 
 namespace FishingCactus.OnlineSessions
 {
     public class OnlineSessionInfo : IOnlineSessionInfo
     {
-        public bool IsValid => true;
+        public bool IsValid => Lobby != null;
         public int NumPlayers = 0;
-        public string SessionId { get; set; }
-        public string ConnectionString { get; set; }
-        public OnlineSessionInfo() { }
+        public string SessionId => Lobby.Id;
+        public string ConnectionString => Lobby.ConnectionString;
+
+        public PlayFab.Multiplayer.Lobby Lobby { get; set; }
+        public OnlineSessionInfo( PlayFab.Multiplayer.Lobby lobby )
+        {
+            Lobby = lobby;
+        }
     }
 
     public class OnlineSessions : IOnlineSessions
@@ -34,17 +40,35 @@ namespace FishingCactus.OnlineSessions
 #pragma warning restore CS0067 // The event 'event' is never used
 
         private const float TimeBetweenSessionsCheck = 6f;
+        private PlayFab.MultiplayerModels.EntityKey MultiplayerKey;
 
-        private PlayFab.MultiplayerModels.EntityKey multiplayerKey;
+        private PFEntityKey EntityKey;
 
-        private Dictionary<string, NamedOnlineSession> sessionMap = new Dictionary<string, NamedOnlineSession>();
+        private Dictionary<string, NamedOnlineSession> SessionMap = new Dictionary<string, NamedOnlineSession>();
         private NamedOnlineSession CurrentSession;
         private OnlineSessionState CurrentSessionState;
 
+        private TaskCompletionSource<bool> LobbyCreatedTask;
+        private TaskCompletionSource<bool> LobbyJoinedTask;
+        private TaskCompletionSource<bool> LobbyLeaveTask;
+        private TaskCompletionSource<bool> LobbyUpdateTask;
+
         public void Initialize( Settings settings )
         {
-            sessionMap.Clear();
+            SessionMap.Clear();
             CurrentSessionState = OnlineSessionState.NoSession;
+            PlayFabMultiplayer.OnLobbyCreateAndJoinCompleted += OnLobbyCreatedAndJoined;
+            PlayFabMultiplayer.OnLobbyJoinCompleted += OnLobbyJoinCompleted;
+            PlayFabMultiplayer.OnLobbyLeaveCompleted += OnLobbyLeaveCompleted;
+            PlayFabMultiplayer.OnLobbyUpdated += OnLobbyUpdated;
+            PlayFabMultiplayer.OnMatchmakingTicketCompleted += OnMatchmakingTicketCompleted;
+            PlayFabMultiplayer.OnMatchmakingTicketStatusChanged += OnMatchmakingTicketStatusChanged;
+            PlayFabMultiplayer.OnError += PlayFabMultiplayer_OnError;
+        }
+
+        private void PlayFabMultiplayer_OnError( PlayFabMultiplayerErrorArgs args )
+        {
+            Log( Util.LogLevel.Error, args.Message );
         }
 
         public Task<bool> CreateSession( IUniqueUserId user_id, string session_name, OnlineSessionSettings session_settings )
@@ -56,37 +80,50 @@ namespace FishingCactus.OnlineSessions
 
             Log( Util.LogLevel.Info, "Creating a lobby" );
             CurrentSessionState = OnlineSessionState.Creating;
-            var task_completion_source = new TaskCompletionSource<bool>();
+            LobbyCreatedTask = new TaskCompletionSource<bool>();
 
-            var request = new CreateLobbyRequest
+            var lobby_create_config = new LobbyCreateConfiguration
             {
-                Owner = GetMultiplayerEntityKey(),
-                MaxPlayers = ( uint )session_settings.NumPublicConnections,
-                Members = new List<Member> { new Member { MemberEntity = GetMultiplayerEntityKey() } },
-                OwnerMigrationPolicy = OwnerMigrationPolicy.Automatic,
-                UseConnections = true
+                MaxMemberCount = ( uint )session_settings.NumPublicConnections,
+                OwnerMigrationPolicy = LobbyOwnerMigrationPolicy.Automatic,
+                LobbyProperties = new Dictionary<string, string>() { { StringConstants.SESSION_NAME, session_name } }
             };
 
-            PlayFabMultiplayerAPI.CreateLobby(
-                request,
-                ( result ) =>
-                {
-                    Log( Util.LogLevel.Info, "Created lobby" );
-                    CurrentSession = AddNamedSession( session_name, result.LobbyId, result.ConnectionString );
-                    CurrentSessionState = OnlineSessionState.InProgress;
-                    OnCreateSessionComplete?.Invoke( session_name, true );
-                    TickSessionCheck();
-                    task_completion_source.TrySetResult( true );
-                },
-                ( error ) =>
-                {
-                    Log( Util.LogLevel.Error, $"Failed to create lobby : {error.GenerateErrorReport()}" );
-                    CurrentSessionState = OnlineSessionState.NoSession;
-                    OnCreateSessionComplete?.Invoke( session_name, false );
-                    task_completion_source.TrySetResult( false );
-                } );
+            var lobby_join_config = new LobbyJoinConfiguration { };
 
-            return task_completion_source.Task;
+            PlayFabMultiplayer.CreateAndJoinLobby(
+                GetPlayerEntityKey(),
+                lobby_create_config,
+                lobby_join_config
+                );
+
+            return LobbyCreatedTask.Task;
+        }
+
+        private void OnLobbyCreatedAndJoined( PlayFab.Multiplayer.Lobby lobby, int result )
+        {
+            if( result == 0 )
+            {
+                string session_name = lobby.GetLobbyProperties()[StringConstants.SESSION_NAME];
+                Log( Util.LogLevel.Info, $"Created lobby : {session_name}" );
+                CurrentSession = AddNamedSession( lobby );
+
+                CurrentSession.SessionSettings.Settings.Add(
+                    StringConstants.CONNEXION_STRING,
+                    new OnlineSessionSetting { Data = lobby.ConnectionString }
+                    );
+
+                CurrentSessionState = OnlineSessionState.InProgress;
+                OnCreateSessionComplete?.Invoke( session_name, true );
+                LobbyCreatedTask.TrySetResult( true );
+            }
+            else
+            {
+                Log( Util.LogLevel.Error, $"Couldn't create lobby : {result}" );
+                CurrentSessionState = OnlineSessionState.NoSession;
+                OnCreateSessionComplete?.Invoke( "", false );
+                LobbyCreatedTask.TrySetResult( false );
+            }
         }
 
         public Task<bool> JoinSession( IUniqueUserId user_id, string session_name, OnlineSessionSearchResult desired_session )
@@ -96,37 +133,40 @@ namespace FishingCactus.OnlineSessions
                 return Task.FromResult( false );
             }
 
-            Log( Util.LogLevel.Info, "Joining lobby" );
             CurrentSessionState = OnlineSessionState.Pending;
+            LobbyJoinedTask = new TaskCompletionSource<bool>();
+            string connexion_string = desired_session.Session.SessionSettings.Settings[StringConstants.CONNEXION_STRING].Data;
+            var member_properties = new Dictionary<string, string>();
 
-            var info = desired_session.Session.SessionInfo as OnlineSessionInfo;
-            var task_completion_source = new TaskCompletionSource<bool>();
-            var request = new JoinLobbyRequest
+            Log( Util.LogLevel.Info, $"Joining lobby : {connexion_string}" );
+
+            PlayFabMultiplayer.JoinLobby(
+                GetPlayerEntityKey(),
+                connexion_string,
+                member_properties
+                );
+
+            return LobbyJoinedTask.Task;
+        }
+
+        private void OnLobbyJoinCompleted( PlayFab.Multiplayer.Lobby lobby, PFEntityKey newMember, int result )
+        {
+            if( result == 0 )
             {
-                MemberEntity = GetMultiplayerEntityKey(),
-                ConnectionString = info.ConnectionString
-            };
-
-            PlayFabMultiplayerAPI.JoinLobby(
-                request,
-                ( result ) =>
-                {
-                    Log( Util.LogLevel.Info, "Joined lobby" );
-                    CurrentSessionState = OnlineSessionState.InProgress;
-                    CurrentSession = AddNamedSession( session_name, result.LobbyId );
-                    OnJoinSessionComplete?.Invoke( session_name, JoinSessionCompleteResult.Success );
-                    TickSessionCheck();
-                    task_completion_source.TrySetResult( true );
-                },
-                ( error ) =>
-                {
-                    Log( Util.LogLevel.Error, $"Couldn't join lobby : {error.GenerateErrorReport()}" );
-                    CurrentSessionState = OnlineSessionState.NoSession;
-                    OnJoinSessionComplete?.Invoke( session_name, JoinSessionCompleteResult.UnknownError );
-                    task_completion_source.TrySetResult( false );
-                } );
-
-            return task_completion_source.Task;
+                Log( Util.LogLevel.Info, "Joined lobby" );
+                string session_name = lobby.GetLobbyProperties()[StringConstants.SESSION_NAME];
+                CurrentSessionState = OnlineSessionState.InProgress;
+                CurrentSession = AddNamedSession( lobby );
+                OnJoinSessionComplete?.Invoke( session_name, JoinSessionCompleteResult.Success );
+                LobbyJoinedTask.TrySetResult( true );
+            }
+            else
+            {
+                Log( Util.LogLevel.Error, $"Couldn't join lobby : {result}" );
+                CurrentSessionState = OnlineSessionState.NoSession;
+                OnJoinSessionComplete?.Invoke( "", JoinSessionCompleteResult.UnknownError );
+                LobbyJoinedTask.TrySetResult( false );
+            }
         }
 
         public Task<bool> EndSession( string session_name )
@@ -138,50 +178,21 @@ namespace FishingCactus.OnlineSessions
 
             Log( Util.LogLevel.Info, "Leaving Lobby" );
             CurrentSessionState = OnlineSessionState.Ending;
+            LobbyLeaveTask = new TaskCompletionSource<bool>();
 
-            var task_completion_source = new TaskCompletionSource<bool>();
-            var onlineSessionInfo = GetNamedSession( session_name ).SessionInfo as OnlineSessionInfo;
-
-            var request = new LeaveLobbyRequest()
-            {
-                LobbyId = onlineSessionInfo.SessionId,
-                MemberEntity = GetMultiplayerEntityKey()
-            };
-
-            PlayFabMultiplayerAPI.LeaveLobby(
-                request,
-                ( result ) =>
-                {
-                    Log( Util.LogLevel.Info, "Left Lobby" );
-                    RemoveNamedSession( session_name );
-                    CurrentSession = null;
-                    CurrentSessionState = OnlineSessionState.NoSession;
-                    OnEndSessionComplete?.Invoke( session_name, true );
-                    task_completion_source.TrySetResult( true );
-                },
-                ( error ) =>
-                {
-                    Log( Util.LogLevel.Error, $"Couldn't leave lobby {error.GenerateErrorReport()}" );
-                    CurrentSessionState = OnlineSessionState.InProgress;
-                    OnEndSessionComplete?.Invoke( session_name, false );
-                    task_completion_source.TrySetResult( false );
-                } );
-
-            return task_completion_source.Task;
+            GetOnlineSessionInfo().Lobby.Leave( GetPlayerEntityKey() );
+            return LobbyLeaveTask.Task;
         }
 
-        private async void TickSessionCheck()
+        private void OnLobbyLeaveCompleted( PlayFab.Multiplayer.Lobby lobby, PFEntityKey localUser )
         {
-            // NOTE: we need to check for the session data every few seconds
-            // TODO: Find a way to listen to lobby updates
-
-            await Task.Delay( Convert.ToInt32( TimeBetweenSessionsCheck * 1000 ) );
-            if( CurrentSession != null && UnityEngine.Application.isPlaying )
-            {
-                Log( Util.LogLevel.Info, "Checking session" );
-                await GetSessionData( CurrentSession.SessionName );
-                TickSessionCheck();
-            }
+            Log( Util.LogLevel.Info, "Left Lobby" );
+            string session_name = lobby.GetLobbyProperties()[StringConstants.SESSION_NAME];
+            RemoveNamedSession( session_name );
+            CurrentSession = null;
+            CurrentSessionState = OnlineSessionState.NoSession;
+            OnEndSessionComplete?.Invoke( session_name, true );
+            LobbyLeaveTask.TrySetResult( true );
         }
 
         public Task<bool> UpdateSession( string session_name, OnlineSessionSettings updated_session_settings )
@@ -193,89 +204,52 @@ namespace FishingCactus.OnlineSessions
             }
 
             Log( Util.LogLevel.Info, "Updating lobby data" );
-            var task_completion_source = new TaskCompletionSource<bool>();
-            var session_info = GetNamedSession( session_name ).SessionInfo as OnlineSessionInfo;
+            LobbyUpdateTask = new TaskCompletionSource<bool>();
+            var new_properties = new Dictionary<string, string>();
 
-            Dictionary<string, string> datas = new Dictionary<string, string>();
+            foreach( var item in GetOnlineSessionInfo().Lobby.GetLobbyProperties() )
+            {
+                new_properties.Add( item.Key, item.Value );
+            }
+
             foreach( var item in updated_session_settings.Settings )
             {
-                datas.Add( item.Key, item.Value.Data );
+                if( new_properties.ContainsKey( item.Key ) )
+                {
+                    new_properties[item.Key] = item.Value.Data;
+                }
+                else
+                {
+                    new_properties.Add( item.Key, item.Value.Data );
+                }
             }
 
-            var request = new UpdateLobbyRequest
+            var lobby_update = new LobbyDataUpdate
             {
-                MemberEntity = GetMultiplayerEntityKey(),
-                LobbyId = session_info.SessionId,
-                LobbyData = datas
+                LobbyProperties = new_properties
             };
 
-            PlayFabMultiplayerAPI.UpdateLobby(
-                request,
-                ( result ) =>
-                {
-                    Log( Util.LogLevel.Info, "Updated lobby" );
-                    OnUpdateSessionComplete?.Invoke( session_name, true );
-                    task_completion_source.TrySetResult( true );
-                },
-                ( error ) =>
-                {
-                    Log( Util.LogLevel.Error, "Failed to update lobby" );
-                    OnUpdateSessionComplete?.Invoke( session_name, false );
-                    task_completion_source.TrySetResult( false );
-                } );
+            GetOnlineSessionInfo().Lobby.PostUpdate(
+               GetPlayerEntityKey(),
+               lobby_update
+                );
 
-            return task_completion_source.Task;
+            return LobbyUpdateTask.Task;
         }
 
-        private Task<bool> GetSessionData( string session_name )
+        private void OnLobbyUpdated( PlayFab.Multiplayer.Lobby lobby, bool ownerUpdated, bool maxMembersUpdated, bool accessPolicyUpdated, bool membershipLockUpdated, IList<string> updatedSearchPropertyKeys, IList<string> updatedLobbyPropertyKeys, IList<LobbyMemberUpdateSummary> memberUpdates )
         {
-            if( GetNamedSession( session_name ) == null )
-            {
-                Log( Util.LogLevel.Warning, "Can't get session data : session does not exist" );
-                return Task.FromResult( false );
-            }
-
-            var task_completion_source = new TaskCompletionSource<bool>();
-            var info = GetNamedSession( session_name ).SessionInfo as OnlineSessionInfo;
-            var request = new GetLobbyRequest
-            {
-                LobbyId = info.SessionId
-            };
-
-            Log( Util.LogLevel.Info, "Getting session data" );
-            PlayFabMultiplayerAPI.GetLobby(
-                request,
-                ( result ) =>
-                {
-                    Log( Util.LogLevel.Info, "Found lobby" );
-                    var selected_session = GetNamedSession( session_name );
-                    var session_info = selected_session.SessionInfo as OnlineSessionInfo;
-                    session_info.NumPlayers = result.Lobby.Members.Count;
-
-                    if( result.Lobby.LobbyData != null )
-                    {
-                        foreach( var item in result.Lobby.LobbyData )
-                        {
-                            selected_session.SessionSettings.Settings[item.Key] = new OnlineSessionSetting { Data = item.Value };
-                        }
-                    }
-
-                    OnUpdateSessionComplete?.Invoke( session_name, true );
-                    task_completion_source.TrySetResult( true );
-                },
-                ( error ) =>
-                {
-                    Log( Util.LogLevel.Error, $"Couldn't find lobby {error.GenerateErrorReport()}" );
-                    OnUpdateSessionComplete?.Invoke( session_name, false );
-                    task_completion_source.TrySetResult( false );
-                } );
-
-            return task_completion_source.Task;
+            if( CurrentSession == null ) { return; }
+            Log( Util.LogLevel.Info, $"Lobby properties updated" );
+            GetOnlineSessionInfo().Lobby = lobby;
+            CurrentSession.SessionSettings.Settings = GetSettingsFromDictionnary( lobby.GetLobbyProperties() );
+            OnUpdateSessionComplete?.Invoke( lobby.GetLobbyProperties()[StringConstants.SESSION_NAME], true );
+            LobbyUpdateTask?.TrySetResult( true );
         }
 
         public Task<bool> StartSession( string session_name )
         {
-            if( !sessionMap.ContainsKey( session_name ) )
+            if( !SessionMap.ContainsKey( session_name ) )
             {
                 return Task.FromResult( false );
             }
@@ -285,7 +259,7 @@ namespace FishingCactus.OnlineSessions
 
         public Task<bool> DestroySession( string session_name )
         {
-            if( sessionMap.ContainsKey( session_name ) )
+            if( SessionMap.ContainsKey( session_name ) )
             {
                 return Task.FromResult( false );
             }
@@ -293,32 +267,59 @@ namespace FishingCactus.OnlineSessions
             return Task.FromResult( true );
         }
 
-        private NamedOnlineSession AddNamedSession( string session_name, string session_id, string connection_string = "" )
-        {
 
+        public Task<bool> StartMatchmaking( List<IUniqueUserId> user_ids, string session_name, OnlineSessionSettings new_session_settings )
+        {
+            //Need to add "Latencies", otherwise it just breaks
+            //string attributes = "\"{\"elo\":\"50\"}\"";
+            MatchUser localUser = new MatchUser( GetPlayerEntityKey(), "" );
+            uint matchmaking_time = Convert.ToUInt32( new_session_settings.Settings[StringConstants.MATCHMAKING_TIME].Data );
+
+            PlayFabMultiplayer.CreateMatchmakingTicket(
+                localUser,
+                session_name,
+                matchmaking_time
+                );
+
+            return Task.FromResult( true );
+        }
+
+        private void OnMatchmakingTicketCompleted( MatchmakingTicket ticket, int result )
+        {
+            Log( Util.LogLevel.Info, "Matchmaking ticket completed" );
+        }
+
+
+        private void OnMatchmakingTicketStatusChanged( MatchmakingTicket ticket )
+        {
+            Log( Util.LogLevel.Info, $"Status changed : {ticket.Status}" );
+        }
+
+        private NamedOnlineSession AddNamedSession( PlayFab.Multiplayer.Lobby lobby )
+        {
+            string session_name = lobby.GetLobbyProperties()[StringConstants.SESSION_NAME];
             NamedOnlineSession newSession = new NamedOnlineSession(
                  session_name,
                  new OnlineSession
                  {
-                     SessionInfo = new OnlineSessionInfo
+                     SessionInfo = new OnlineSessionInfo( lobby )
                      {
-                         SessionId = session_id,
-                         ConnectionString = connection_string
+                         Lobby = lobby,
                      }
                  } );
 
-            sessionMap.Add( session_name, newSession );
+            SessionMap.Add( session_name, newSession );
             return newSession;
         }
 
         private void RemoveNamedSession( string session_name )
         {
-            sessionMap.Remove( session_name );
+            SessionMap.Remove( session_name );
         }
 
         public NamedOnlineSession GetNamedSession( string session_name )
         {
-            if( sessionMap.TryGetValue( session_name, out NamedOnlineSession named_online_session ) )
+            if( SessionMap.TryGetValue( session_name, out NamedOnlineSession named_online_session ) )
             {
                 return named_online_session;
             }
@@ -389,6 +390,13 @@ namespace FishingCactus.OnlineSessions
                 return false;
             }
 
+            OnlineSessionInfo info = GetNamedSession( session_name ).SessionInfo as OnlineSessionInfo;
+
+            if( !info.IsValid )
+            {
+                Log( Util.LogLevel.Warning, "Can't leave session : invalid lobby" );
+            }
+
             if( CurrentSessionState != OnlineSessionState.InProgress )
             {
                 Log( Util.LogLevel.Warning, "Can't leave session right now" );
@@ -398,19 +406,41 @@ namespace FishingCactus.OnlineSessions
             return true;
         }
 
-        private EntityKey GetMultiplayerEntityKey()
+        private PFEntityKey GetPlayerEntityKey()
         {
-            if( multiplayerKey == null )
+            if( EntityKey == null )
             {
                 USAFUCore core = USAFUCore.Get();
                 IUniqueUserId userID = core.UserSystem.GetUniqueUserId( 0 );
                 IUserOnlineAccount account = core.UserSystem.GetUserAccount( userID );
                 account.GetAuthAttributeByName( out string ID, StringConstants.ENTITY_ID );
-                account.GetAuthAttributeByName( out string Type, StringConstants.ENTITY_TYPE );
-                multiplayerKey = new EntityKey { Id = ID, Type = Type };
+                account.GetAuthAttributeByName( out string entity_type, StringConstants.ENTITY_TYPE );
+                EntityKey = new PFEntityKey( ID, entity_type );
             }
 
-            return multiplayerKey;
+            return EntityKey;
         }
+
+        private OnlineSessionInfo GetOnlineSessionInfo()
+        {
+            if( CurrentSession == null )
+            {
+                return null;
+            }
+
+            return CurrentSession.SessionInfo as OnlineSessionInfo;
+        }
+
+        private Dictionary<string, OnlineSessionSetting> GetSettingsFromDictionnary( IDictionary<string, string> datas )
+        {
+            var settings = new Dictionary<string, OnlineSessionSetting>();
+            foreach( var item in datas )
+            {
+                settings.Add( item.Key, new OnlineSessionSetting { Data = item.Value } );
+            }
+
+            return settings;
+        }
+
     }
 }

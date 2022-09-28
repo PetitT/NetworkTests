@@ -6,7 +6,7 @@ namespace FishingCactus.User
 {
     public class UserOnlineAccount : IUserOnlineAccount
     {
-        public string DisplayName { get => accountData[StringConstants.DISPLAY_NAME]; }
+        public string DisplayName { get => GetDisplayName(); }
         public string RealName { get => string.Empty; }
         public IUniqueUserId UserId { get => userId; }
 
@@ -39,6 +39,16 @@ namespace FishingCactus.User
         public Task<string> GetAccessToken( IAccessTokenRequestInfos request_infos = null )
         {
             return Task.FromResult( string.Empty );
+        }
+
+        private string GetDisplayName()
+        {
+            if( accountData.TryGetValue( StringConstants.DISPLAY_NAME, out string display_name ) )
+            {
+                return display_name;
+            }
+
+            return "";
         }
     }
 }
