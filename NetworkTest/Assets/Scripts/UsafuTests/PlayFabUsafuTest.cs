@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using FishingCactus.User;
 using FishingCactus.OnlineSessions;
+using System;
 
 public class PlayFabUsafuTest : MonoBehaviour
 {
@@ -30,6 +31,10 @@ public class PlayFabUsafuTest : MonoBehaviour
         else if( new_status == ELoginStatus.LoggedIn )
         {
             connectedName = USAFUCore.Get().UserSystem.GetPlayerNickname( new_user_id );
+            if( string.IsNullOrEmpty( connectedName ) )
+            {
+                connectedName = "...";
+            }
         }
     }
 
@@ -112,6 +117,39 @@ public class PlayFabUsafuTest : MonoBehaviour
 
     private async void Join1v1Matchmaking()
     {
+        MatchmakingAttributes attributes = new MatchmakingAttributes
+        {
+            elo = 50,
+            latencies = new Latencies[]
+            {
+                    new Latencies  {
+                        region = "NorthEurope",
+                        latency = 100
+                    }
+            }
+        };
+        string jsonAttributes = JsonUtility.ToJson( attributes );
+
+        bool completed = await USAFUCore.Get().OnlineSessions.StartMatchmaking(
+            new List<IUniqueUserId> { USAFUCore.Get().UserSystem.GetUniqueUserId( 0 ) },
+            "QuickMatch",
+            new OnlineSessionSettings
+            {
+                Settings = new Dictionary<string, OnlineSessionSetting>()
+                {
+                    { StringConstants.MATCHMAKING_TIME, new OnlineSessionSetting { Data = "30" } },
+                    { StringConstants.MATCHMAKING_ATTRIBUTES, new OnlineSessionSetting{Data = jsonAttributes } }
+                }
+            } );
+
+        Debug.Log( $"Join 1V1 : {completed}" );
+    }
+
+    private async void JoinSimpleMatchmaking()
+    {
+        SimpleMatchmakingAttributes attributes = new SimpleMatchmakingAttributes() { elo = 0 };
+        string json = JsonUtility.ToJson( attributes );
+
         bool completed = await USAFUCore.Get().OnlineSessions.StartMatchmaking(
             new List<IUniqueUserId> { USAFUCore.Get().UserSystem.GetUniqueUserId( 0 ) },
             "Simple",
@@ -119,10 +157,21 @@ public class PlayFabUsafuTest : MonoBehaviour
             {
                 Settings = new Dictionary<string, OnlineSessionSetting>
                 {
-                    { StringConstants.MATCHMAKING_TIME, new OnlineSessionSetting { Data = "30" } }
+                    {StringConstants.MATCHMAKING_ATTRIBUTES, new OnlineSessionSetting{ Data = json} },
+                    {StringConstants.MATCHMAKING_TIME, new OnlineSessionSetting { Data = "30" } }
                 }
-            }
-            );
+            } );
+
+        Debug.Log( $"Join simple : {completed}" );
+    }
+
+    private async void CancelMatchmaking()
+    {
+        bool canceled = await USAFUCore.Get().OnlineSessions.CancelMatchmaking(
+            USAFUCore.Get().UserSystem.GetUniqueUserId( 0 ),
+            "" );
+
+        Debug.Log( $"Canceled : {canceled}" );
     }
 
 
@@ -133,9 +182,9 @@ public class PlayFabUsafuTest : MonoBehaviour
         if( GUI.Button( new Rect( 100, 0, 100, 50 ), "Logout" ) ) { USAFUCore.Get().UserSystem.Logout( 0 ); }
 
         if( GUI.Button( new Rect( 0, 200, 100, 50 ), "QuickMatch" ) ) { Join1v1Matchmaking(); }
-        //if( GUI.Button( new Rect( 100, 0, 100, 50 ), "2vs2" ) ) { Join2v2Matchmaking(); }
+        if( GUI.Button( new Rect( 0, 250, 100, 50 ), "Simple" ) ) { JoinSimpleMatchmaking(); }
+        if( GUI.Button( new Rect( 0, 300, 100, 50 ), "Cancel" ) ) { CancelMatchmaking(); }
         //if( GUI.Button( new Rect( 0, 100, 100, 50 ), "Add elo" ) ) { TestElo++; }
-        //if( GUI.Button( new Rect( 0, 50, 175, 50 ), "Cancel all matchmaking" ) ) { playFabManager.MatchmakingManager.CancelAllMatchmakingQueuesForUser(); }
 
         //string displayName = playFabManager.IsLoggedIn ? $"Logged in as -{playFabManager.DisplayName}-" : "Not connected";
         //GUI.Label( new Rect( 5, Screen.height - 50, 200, 50 ), displayName );
@@ -153,5 +202,25 @@ public class PlayFabUsafuTest : MonoBehaviour
         connectedName = GUI.TextField( new Rect( 0, 50, 100, 20 ), connectedName );
         //GUI.TextField( new Rect( Screen.width - 200, 25, 100, 25 ), PlayFabManager.Instance.LobbyManager.CurrentLobbyID );
 
+    }
+
+    [Serializable]
+    public struct MatchmakingAttributes
+    {
+        public int elo;
+        public Latencies[] latencies;
+    }
+
+    [Serializable]
+    public struct Latencies
+    {
+        public string region;
+        public int latency;
+    }
+
+    [Serializable]
+    public struct SimpleMatchmakingAttributes
+    {
+        public int elo;
     }
 }

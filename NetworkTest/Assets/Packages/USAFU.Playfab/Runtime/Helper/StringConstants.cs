@@ -7,4 +7,5 @@ public static class StringConstants
     public const string ENTITY_TYPE = "entity_type";
     public const string CONNEXION_STRING = "connexion_string";
     public const string MATCHMAKING_TIME = "matchmaking_time";
+    public const string MATCHMAKING_ATTRIBUTES = "matchmaking_attributes";
 }

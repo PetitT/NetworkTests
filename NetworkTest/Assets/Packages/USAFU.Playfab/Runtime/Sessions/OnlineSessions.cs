@@ -1,6 +1,5 @@
 using FishingCactus.Setup;
 using FishingCactus.User;
-using PlayFab.MultiplayerModels;
 using PlayFab;
 using System;
 using System.Collections.Generic;
@@ -9,22 +8,28 @@ using static FishingCactus.Util.Logger;
 using static HelperFunctions;
 using System.Threading;
 using PlayFab.Multiplayer;
+using System.Linq;
 
 namespace FishingCactus.OnlineSessions
 {
     public class OnlineSessionInfo : IOnlineSessionInfo
     {
         public bool IsValid => Lobby != null;
-        public int NumPlayers = 0;
         public string SessionId => Lobby.Id;
-        public string ConnectionString => Lobby.ConnectionString;
 
-        public PlayFab.Multiplayer.Lobby Lobby { get; set; }
-        public OnlineSessionInfo( PlayFab.Multiplayer.Lobby lobby )
+        public Lobby Lobby { get; set; }
+        public OnlineSessionInfo( Lobby lobby )
         {
             Lobby = lobby;
         }
     }
+
+    public class MatchmakingInfo
+    {
+        public string QueueName;
+        public MatchmakingTicket Ticket;
+    }
+
 
     public class OnlineSessions : IOnlineSessions
     {
@@ -37,14 +42,14 @@ namespace FishingCactus.OnlineSessions
         public event OnSessionFailureDelegate OnSessionFailure;
         public event OnJoinSessionCompleteDelegate OnJoinSessionComplete;
         public event OnSessionUserInviteAcceptedDelegate OnSessionUserInviteAccepted;
+        public event OnMatchmakingCompleteDelegate OnMatchmakingComplete;
+        public event OnMatchmakingCancelCompleteDelegate OnMatchmakingCancelComplete;
 #pragma warning restore CS0067 // The event 'event' is never used
-
-        private const float TimeBetweenSessionsCheck = 6f;
-        private PlayFab.MultiplayerModels.EntityKey MultiplayerKey;
 
         private PFEntityKey EntityKey;
 
         private Dictionary<string, NamedOnlineSession> SessionMap = new Dictionary<string, NamedOnlineSession>();
+        private MatchmakingInfo CurrentMatchmakingInfo;
         private NamedOnlineSession CurrentSession;
         private OnlineSessionState CurrentSessionState;
 
@@ -52,6 +57,8 @@ namespace FishingCactus.OnlineSessions
         private TaskCompletionSource<bool> LobbyJoinedTask;
         private TaskCompletionSource<bool> LobbyLeaveTask;
         private TaskCompletionSource<bool> LobbyUpdateTask;
+        private TaskCompletionSource<bool> MatchmakingBeginTask;
+        private TaskCompletionSource<bool> MatchmakingCancelTask;
 
         public void Initialize( Settings settings )
         {
@@ -100,7 +107,7 @@ namespace FishingCactus.OnlineSessions
             return LobbyCreatedTask.Task;
         }
 
-        private void OnLobbyCreatedAndJoined( PlayFab.Multiplayer.Lobby lobby, int result )
+        private void OnLobbyCreatedAndJoined( Lobby lobby, int result )
         {
             if( result == 0 )
             {
@@ -128,14 +135,15 @@ namespace FishingCactus.OnlineSessions
 
         public Task<bool> JoinSession( IUniqueUserId user_id, string session_name, OnlineSessionSearchResult desired_session )
         {
-            if( !CanJoinSession( session_name, user_id ) )
+            if( !CanJoinSession( session_name, user_id, desired_session ) )
             {
                 return Task.FromResult( false );
             }
 
             CurrentSessionState = OnlineSessionState.Pending;
             LobbyJoinedTask = new TaskCompletionSource<bool>();
-            string connexion_string = desired_session.Session.SessionSettings.Settings[StringConstants.CONNEXION_STRING].Data;
+
+            var connexion_string = desired_session.Session.SessionSettings.Settings[StringConstants.CONNEXION_STRING].Data;
             var member_properties = new Dictionary<string, string>();
 
             Log( Util.LogLevel.Info, $"Joining lobby : {connexion_string}" );
@@ -149,7 +157,7 @@ namespace FishingCactus.OnlineSessions
             return LobbyJoinedTask.Task;
         }
 
-        private void OnLobbyJoinCompleted( PlayFab.Multiplayer.Lobby lobby, PFEntityKey newMember, int result )
+        private void OnLobbyJoinCompleted( Lobby lobby, PFEntityKey new_member, int result )
         {
             if( result == 0 )
             {
@@ -184,7 +192,7 @@ namespace FishingCactus.OnlineSessions
             return LobbyLeaveTask.Task;
         }
 
-        private void OnLobbyLeaveCompleted( PlayFab.Multiplayer.Lobby lobby, PFEntityKey localUser )
+        private void OnLobbyLeaveCompleted( Lobby lobby, PFEntityKey local_User )
         {
             Log( Util.LogLevel.Info, "Left Lobby" );
             string session_name = lobby.GetLobbyProperties()[StringConstants.SESSION_NAME];
@@ -237,7 +245,7 @@ namespace FishingCactus.OnlineSessions
             return LobbyUpdateTask.Task;
         }
 
-        private void OnLobbyUpdated( PlayFab.Multiplayer.Lobby lobby, bool ownerUpdated, bool maxMembersUpdated, bool accessPolicyUpdated, bool membershipLockUpdated, IList<string> updatedSearchPropertyKeys, IList<string> updatedLobbyPropertyKeys, IList<LobbyMemberUpdateSummary> memberUpdates )
+        private void OnLobbyUpdated( Lobby lobby, bool ownerUpdated, bool maxMembersUpdated, bool accessPolicyUpdated, bool membershipLockUpdated, IList<string> updatedSearchPropertyKeys, IList<string> updatedLobbyPropertyKeys, IList<LobbyMemberUpdateSummary> memberUpdates )
         {
             if( CurrentSession == null ) { return; }
             Log( Util.LogLevel.Info, $"Lobby properties updated" );
@@ -267,35 +275,102 @@ namespace FishingCactus.OnlineSessions
             return Task.FromResult( true );
         }
 
-
         public Task<bool> StartMatchmaking( List<IUniqueUserId> user_ids, string session_name, OnlineSessionSettings new_session_settings )
         {
-            //Need to add "Latencies", otherwise it just breaks
-            //string attributes = "\"{\"elo\":\"50\"}\"";
-            MatchUser localUser = new MatchUser( GetPlayerEntityKey(), "" );
-            uint matchmaking_time = Convert.ToUInt32( new_session_settings.Settings[StringConstants.MATCHMAKING_TIME].Data );
+            if( !CanJoinMatchmakingQueue( user_ids[0], new_session_settings ) )
+            {
+                return Task.FromResult( false );
+            }
 
-            PlayFabMultiplayer.CreateMatchmakingTicket(
-                localUser,
-                session_name,
-                matchmaking_time
-                );
+            Log( Util.LogLevel.Info, "Joining Matchmaking queue" );
+            MatchmakingBeginTask = new TaskCompletionSource<bool>();
 
-            return Task.FromResult( true );
+            string attributes = "";
+            if( new_session_settings.Settings.TryGetValue( StringConstants.MATCHMAKING_ATTRIBUTES, out OnlineSessionSetting setting ) )
+            {
+                attributes = setting.Data;
+            }
+
+            var matchmaking_time = Convert.ToUInt32( new_session_settings.Settings[StringConstants.MATCHMAKING_TIME].Data );
+            var local_User = new MatchUser( GetPlayerEntityKey(), attributes );
+
+            MatchmakingTicket ticket = PlayFabMultiplayer.CreateMatchmakingTicket(
+                  local_User,
+                  session_name,
+                  matchmaking_time
+                  );
+
+            CurrentMatchmakingInfo = new MatchmakingInfo
+            {
+                Ticket = ticket,
+                QueueName = session_name
+            };
+
+            return MatchmakingBeginTask.Task;
+        }
+
+        public Task<bool> CancelMatchmaking( IUniqueUserId user_id, string session_name )
+        {
+            if( !CanLeaveMatchmakingQueue( user_id ) )
+            {
+                return Task.FromResult( false );
+            }
+
+            Log( Util.LogLevel.Info, "Canceling matchmaking ticket" );
+            MatchmakingCancelTask = new TaskCompletionSource<bool>();
+            CurrentMatchmakingInfo.Ticket.Cancel();
+            return MatchmakingCancelTask.Task;
+        }
+
+        private void OnMatchmakingTicketStatusChanged( MatchmakingTicket ticket )
+        {
+            Log( Util.LogLevel.Info, $"Matchmaking Status changed : {ticket.Status}" );
+
+            if( ticket.Status == MatchmakingTicketStatus.WaitingForMatch )
+            {
+                Log( Util.LogLevel.Info, "Succesfully joined matchmaking" );
+                MatchmakingBeginTask?.TrySetResult( true );
+            }
+
+            if( ticket.Status == MatchmakingTicketStatus.Failed )
+            {
+                Log( Util.LogLevel.Warning, "Matchmaking ticket failed to find a match" );
+                MatchmakingBeginTask?.TrySetResult( false );
+            }
+
+            if( ticket.Status == MatchmakingTicketStatus.Canceled )
+            {
+                Log( Util.LogLevel.Info, "Matchmaking ticket was canceled" );
+                MatchmakingCancelTask?.TrySetResult( true );
+                MatchmakingBeginTask?.TrySetResult( false );
+                OnMatchmakingCancelComplete?.Invoke( CurrentMatchmakingInfo.QueueName, true );
+            }
+
+            if( ticket.Status == MatchmakingTicketStatus.Matched )
+            {
+                Log( Util.LogLevel.Info, "Matchmaking ticket found a match" );
+                MatchmakingCancelTask?.TrySetResult( false );
+            }
         }
 
         private void OnMatchmakingTicketCompleted( MatchmakingTicket ticket, int result )
         {
-            Log( Util.LogLevel.Info, "Matchmaking ticket completed" );
+            bool success = result == 0;
+
+            if( success )
+            {
+                Log( Util.LogLevel.Info, $"Matchmaking ticket succesfully found a match" );
+            }
+            else
+            {
+                Log( Util.LogLevel.Warning, "Matchmaking ticket failed to find a match" );
+            }
+
+            OnMatchmakingComplete?.Invoke( CurrentMatchmakingInfo.QueueName, success );
+            CurrentMatchmakingInfo = null;
         }
 
-
-        private void OnMatchmakingTicketStatusChanged( MatchmakingTicket ticket )
-        {
-            Log( Util.LogLevel.Info, $"Status changed : {ticket.Status}" );
-        }
-
-        private NamedOnlineSession AddNamedSession( PlayFab.Multiplayer.Lobby lobby )
+        private NamedOnlineSession AddNamedSession( Lobby lobby )
         {
             string session_name = lobby.GetLobbyProperties()[StringConstants.SESSION_NAME];
             NamedOnlineSession newSession = new NamedOnlineSession(
@@ -347,7 +422,7 @@ namespace FishingCactus.OnlineSessions
             return Task.FromResult<SessionInvitation>( null );
         }
 
-        private bool CanJoinSession( string session_name, IUniqueUserId user_id )
+        private bool CanJoinSession( string session_name, IUniqueUserId user_id, OnlineSessionSearchResult desired_session = null )
         {
             if( !IsUserValid( user_id ) )
             {
@@ -365,6 +440,15 @@ namespace FishingCactus.OnlineSessions
             {
                 Log( Util.LogLevel.Warning, "Can't join session : Session already exists" );
                 return false;
+            }
+
+            if( desired_session != null )
+            {
+                if( !desired_session.Session.SessionSettings.Settings.ContainsKey( StringConstants.CONNEXION_STRING ) )
+                {
+                    Log( Util.LogLevel.Warning, $"Can't join session : Session settings must contain a {StringConstants.CONNEXION_STRING} key" );
+                    return false;
+                }
             }
 
             if( CurrentSessionState != OnlineSessionState.NoSession )
@@ -395,11 +479,62 @@ namespace FishingCactus.OnlineSessions
             if( !info.IsValid )
             {
                 Log( Util.LogLevel.Warning, "Can't leave session : invalid lobby" );
+                return false;
             }
 
             if( CurrentSessionState != OnlineSessionState.InProgress )
             {
                 Log( Util.LogLevel.Warning, "Can't leave session right now" );
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool CanJoinMatchmakingQueue( IUniqueUserId user_id, OnlineSessionSettings session_settings )
+        {
+            if( !IsUserValid( user_id ) )
+            {
+                Log( Util.LogLevel.Warning, "Can't join matchmaking queue: Invalid user ID" );
+                return false;
+            }
+
+            if( CurrentMatchmakingInfo != null )
+            {
+                Log( Util.LogLevel.Warning, "Can't join matchmaking queue: Already in a queue" );
+                return false;
+            }
+
+            if( !session_settings.Settings.ContainsKey( StringConstants.MATCHMAKING_TIME ) )
+            {
+                Log( Util.LogLevel.Warning, $"Can't join matchmaking queue: Session settings must contain {StringConstants.MATCHMAKING_TIME}" );
+                return false;
+            }
+
+            try
+            {
+                Convert.ToUInt32( session_settings.Settings[StringConstants.MATCHMAKING_TIME].Data );
+            }
+            catch
+            {
+                Log( Util.LogLevel.Warning, $"Can't join matchmaking queue: {StringConstants.MATCHMAKING_TIME} setting must be convertible to an uint" );
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool CanLeaveMatchmakingQueue( IUniqueUserId user_id )
+        {
+            if( !IsUserValid( user_id ) )
+            {
+                Log( Util.LogLevel.Warning, "Can't leave matchmaking queue : Invalid user ID" );
+                return false;
+            }
+
+            if( CurrentMatchmakingInfo == null )
+            {
+                Log( Util.LogLevel.Warning, "Can't leave matchmaking queue : Not in queue" );
                 return false;
             }
 
@@ -441,6 +576,5 @@ namespace FishingCactus.OnlineSessions
 
             return settings;
         }
-
     }
 }

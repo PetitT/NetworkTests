@@ -1,0 +1,5 @@
+{
+	"displayName":"Login Flow",
+	"description": "TRC Compliant Login handling",
+	"createSeparatePackage": false
+}

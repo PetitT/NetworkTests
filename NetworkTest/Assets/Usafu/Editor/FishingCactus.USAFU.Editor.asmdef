@@ -1,0 +1,10 @@
+{
+    "name": "FishingCactus.USAFU.Editor",
+    "references": [
+      "FishingCactus.USAFU"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}
