@@ -160,7 +160,7 @@ namespace FishingCactus.Unity
                 .Where(assembly =>
                 {
                     var name_part = assembly.FullName.Split(',')[0];
-                    return name_part.StartsWith("FishingCactus.USAFU.") && !name_part.EndsWith("Editor");
+                    return name_part.StartsWith("FishingCactus.USAFU.PlayFab") && !name_part.EndsWith("Editor");
                 } );
             Debug.Assert(filtered_assemblies.Count() == 1);
             return filtered_assemblies.ElementAt(0);

@@ -6,8 +6,9 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using UnityEngine;
+using FishingCactus.Util;
 using static FishingCactus.Util.Logger;
-using static HelperFunctions;
+using static FishingCactus.Util.HelperMethods;
 
 namespace FishingCactus.User
 {
@@ -77,7 +78,7 @@ namespace FishingCactus.User
                         result.EntityToken.Entity.Type
                         );
 
-                    PlayFabMultiplayer.SetEntityToken(context);
+                    PlayFabMultiplayer.SetEntityToken( context );
 
                     LoginStatus = ELoginStatus.LoggedIn;
                     OnLoginStatusChanged?.Invoke( ELoginStatus.NotLoggedIn, ELoginStatus.LoggedIn, UserID );

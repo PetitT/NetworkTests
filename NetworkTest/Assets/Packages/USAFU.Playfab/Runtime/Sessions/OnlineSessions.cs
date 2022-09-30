@@ -5,8 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using static FishingCactus.Util.Logger;
-using static HelperFunctions;
-using System.Threading;
+using static FishingCactus.Util.HelperMethods;
+using FishingCactus.Util;
 using PlayFab.Multiplayer;
 using System.Linq;
 
@@ -211,6 +211,12 @@ namespace FishingCactus.OnlineSessions
                 return Task.FromResult( false );
             }
 
+            if( !IsSessionOwner( GetNamedSession( session_name ) ) )
+            {
+                Log( Util.LogLevel.Warning, "Can't update session : not the session owner" );
+                return Task.FromResult( false );
+            }
+
             Log( Util.LogLevel.Info, "Updating lobby data" );
             LobbyUpdateTask = new TaskCompletionSource<bool>();
             var new_properties = new Dictionary<string, string>();
@@ -250,6 +256,12 @@ namespace FishingCactus.OnlineSessions
             if( CurrentSession == null ) { return; }
             Log( Util.LogLevel.Info, $"Lobby properties updated" );
             GetOnlineSessionInfo().Lobby = lobby;
+
+            if( lobby.TryGetOwner( out PFEntityKey owner_key ) )
+            {
+                GetNamedSession( lobby.GetLobbyProperties()[StringConstants.SESSION_NAME] ).OwningUserId = new UniqueUserId( owner_key.Id );
+            }
+
             CurrentSession.SessionSettings.Settings = GetSettingsFromDictionnary( lobby.GetLobbyProperties() );
             OnUpdateSessionComplete?.Invoke( lobby.GetLobbyProperties()[StringConstants.SESSION_NAME], true );
             LobbyUpdateTask?.TrySetResult( true );
@@ -257,12 +269,56 @@ namespace FishingCactus.OnlineSessions
 
         public Task<bool> StartSession( string session_name )
         {
-            if( !SessionMap.ContainsKey( session_name ) )
+            if( GetNamedSession( session_name ) == null )
             {
+                Log( Util.LogLevel.Warning, "Can't start session : session does not exist" );
                 return Task.FromResult( false );
             }
 
-            return Task.FromResult( true );
+            if( !IsSessionOwner( GetNamedSession( session_name ) ) )
+            {
+                Log( Util.LogLevel.Warning, "Can't start session : not the session owner" );
+                return Task.FromResult( false );
+            }
+
+            Log( Util.LogLevel.Info, "Starting session" );
+            var task_completion_source = new TaskCompletionSource<bool>();
+
+            var request = new PlayFab.MultiplayerModels.RequestMultiplayerServerRequest
+            {
+                BuildId = USAFUCore.Get().Settings.PlayFab.BuildID,
+                SessionId = Guid.NewGuid().ToString(),
+                PreferredRegions = USAFUCore.Get().Settings.PlayFab.PreferredRegions.ToList()
+            };
+
+            PlayFabMultiplayerAPI.RequestMultiplayerServer(
+                request,
+                ( response ) =>
+                {
+                    Log( Util.LogLevel.Info, "Started session" );
+
+                    var new_settings = new OnlineSessionSettings
+                    {
+                        Settings = new Dictionary<string, OnlineSessionSetting>
+                        {
+                            { StringConstants.SERVER_ID, new OnlineSessionSetting{Data = response.SessionId} },
+                            { StringConstants.SERVER_IPV4_ADDRESS, new OnlineSessionSetting{Data = response.IPV4Address} },
+                            { StringConstants.SERVER_PORT, new OnlineSessionSetting{Data = response.Ports[0].Num.ToString()} }
+                        }
+                    };
+
+                    UpdateSession( session_name, new_settings );
+                    OnStartSessionComplete?.Invoke( session_name, true );
+                    task_completion_source.TrySetResult( true );
+                },
+                ( error ) =>
+                {
+                    Log( Util.LogLevel.Error, $"Couldn't start session : {error.GenerateErrorReport()}" );
+                    OnStartSessionComplete?.Invoke( session_name, false );
+                    task_completion_source.TrySetResult( false );
+                } );
+
+            return task_completion_source.Task;
         }
 
         public Task<bool> DestroySession( string session_name )
@@ -366,17 +422,41 @@ namespace FishingCactus.OnlineSessions
                 Log( Util.LogLevel.Warning, "Matchmaking ticket failed to find a match" );
             }
 
+            var machmaking_session = new NamedOnlineSession(
+                CurrentMatchmakingInfo.QueueName,
+                new OnlineSession
+                {
+                    SessionSettings = new OnlineSessionSettings
+                    {
+                        Settings = new Dictionary<string, OnlineSessionSetting>
+                        {
+                            { StringConstants.SERVER_ID, new OnlineSessionSetting{Data = ticket.GetMatchDetails().MatchId} },
+                            { StringConstants.SERVER_IPV4_ADDRESS, new OnlineSessionSetting{Data = ticket.GetMatchDetails().ServerDetails.Ipv4Address} },
+                            { StringConstants.SERVER_PORT, new OnlineSessionSetting{Data = ticket.GetMatchDetails().ServerDetails.Ports[0].Num.ToString()} }
+                        }
+                    }
+                } );
+
+            SessionMap.Add( CurrentMatchmakingInfo.QueueName, machmaking_session );
             OnMatchmakingComplete?.Invoke( CurrentMatchmakingInfo.QueueName, success );
             CurrentMatchmakingInfo = null;
         }
 
         private NamedOnlineSession AddNamedSession( Lobby lobby )
         {
-            string session_name = lobby.GetLobbyProperties()[StringConstants.SESSION_NAME];
+            var session_name = lobby.GetLobbyProperties()[StringConstants.SESSION_NAME];
+            string owner_ID = "";
+
+            if( lobby.TryGetOwner( out PFEntityKey key ) )
+            {
+                owner_ID = key.Id;
+            }
+
             NamedOnlineSession newSession = new NamedOnlineSession(
                  session_name,
                  new OnlineSession
                  {
+                     OwningUserId = new UniqueUserId( owner_ID ),
                      SessionInfo = new OnlineSessionInfo( lobby )
                      {
                          Lobby = lobby,
@@ -539,6 +619,12 @@ namespace FishingCactus.OnlineSessions
             }
 
             return true;
+        }
+
+        private bool IsSessionOwner( NamedOnlineSession session )
+        {
+            var owner_ID = session.OwningUserId as UniqueUserId;
+            return owner_ID.UniqueId == GetPlayerEntityKey().Id;
         }
 
         private PFEntityKey GetPlayerEntityKey()

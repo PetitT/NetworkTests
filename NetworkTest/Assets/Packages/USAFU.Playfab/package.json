@@ -1,0 +1,12 @@
+{
+  "name": "com.fishingcactus.usafu.playfab",
+  "displayName": "USAFU.PlayFab",
+  "version": "1.0.0",
+  "unity": "2019.3",
+  "description": "PlayFab module for USAFU",
+  "dependencies": {
+		"com.fishingcactus.usafu": "1.5.0",
+		"com.fishingcactus.sdk.playfab" : "2.149.22"
+  },
+  "type": "library"
+}

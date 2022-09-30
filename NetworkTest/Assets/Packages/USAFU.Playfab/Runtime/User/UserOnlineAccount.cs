@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace FishingCactus.User
@@ -12,7 +11,6 @@ namespace FishingCactus.User
 
         private IUniqueUserId userId;
 
-        //Prefill all user datas on init here
         private Dictionary<string, string> accountData = new Dictionary<string, string>();
 
         public UserOnlineAccount( IUniqueUserId user_id )
@@ -43,11 +41,12 @@ namespace FishingCactus.User
 
         private string GetDisplayName()
         {
-            if( accountData.TryGetValue( StringConstants.DISPLAY_NAME, out string display_name ) )
+            if( accountData.TryGetValue( Util.StringConstants.DISPLAY_NAME, out string display_name ) )
             {
                 return display_name;
             }
 
+            Util.Logger.Log( Util.LogLevel.Warning, "User has no display name" );
             return "";
         }
     }

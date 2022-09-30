@@ -42,8 +42,8 @@ namespace FishingCactus.Setup
         public SettingsWSA WSA;
         public SettingsGoG GoG;
         public SettingsOculus Oculus;
-        public SettingsGeneric Generic;
         public SettingsPlayFab PlayFab;
+        public SettingsGeneric Generic;
     }
 
     [Serializable]
@@ -125,5 +125,7 @@ namespace FishingCactus.Setup
     public struct SettingsPlayFab
     {
         public bool ConnectWithDevice;
+        public string BuildID;
+        public string[] PreferredRegions;
     }
 }
