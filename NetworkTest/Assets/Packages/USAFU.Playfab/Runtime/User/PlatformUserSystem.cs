@@ -14,8 +14,7 @@ namespace FishingCactus.User
 {
     public class PlatformUserSystem : IPlatformUserSystem
     {
-        private Settings settings;
-
+        private Settings Settings;
         private UniqueUserId UserID;
         private UserOnlineAccount UserAccount;
         private ELoginStatus LoginStatus = ELoginStatus.NotLoggedIn;
@@ -39,7 +38,7 @@ namespace FishingCactus.User
 
             var request = new LoginWithCustomIDRequest
             {
-                CustomId = settings.PlayFab.ConnectWithDevice ? SystemInfo.deviceUniqueIdentifier : System.Guid.NewGuid().ToString(),
+                CustomId = Settings.PlayFab.ConnectWithDevice ? SystemInfo.deviceUniqueIdentifier : System.Guid.NewGuid().ToString(),
                 CreateAccount = true,
                 InfoRequestParameters = new GetPlayerCombinedInfoRequestParams
                 {
@@ -70,7 +69,7 @@ namespace FishingCactus.User
                         UserAccount.SetUserAttributeByName( item.Value.Value, item.Key );
                     }
 
-                    PlayFabAuthenticationContext context = new PlayFabAuthenticationContext(
+                    var context = new PlayFabAuthenticationContext(
                         result.SessionTicket,
                         result.EntityToken.EntityToken,
                         result.PlayFabId,
@@ -102,8 +101,7 @@ namespace FishingCactus.User
                 return Task.FromResult( false );
             }
 
-
-            if( GetLoginStatus( 0 ) == ELoginStatus.NotLoggedIn )
+            if( GetLoginStatus( controller_id ) == ELoginStatus.NotLoggedIn )
             {
                 Log( Util.LogLevel.Warning, "Not logged in" );
                 return Task.FromResult( false );
@@ -191,7 +189,7 @@ namespace FishingCactus.User
 
         public void Initialize( Settings settings )
         {
-            this.settings = settings;
+            this.Settings = settings;
         }
 
         public Task<GetUserAvatarResult> GetUserAvatar( IUniqueUserId user_id, AvatarSize avatar_size )

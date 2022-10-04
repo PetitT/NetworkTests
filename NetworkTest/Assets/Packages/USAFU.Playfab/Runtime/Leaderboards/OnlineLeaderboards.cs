@@ -10,8 +10,6 @@ namespace FishingCactus.OnlineLeaderboards
 {
     public class OnlineLeaderboards : OnlineLeaderboardsBase
     {
-
-
         public override Task<bool> ReadLeaderboards( List<IUniqueUserId> user_ids, LeaderboardReadObject read_object )
         {
             if( user_ids.Count != 1 )
@@ -36,7 +34,7 @@ namespace FishingCactus.OnlineLeaderboards
             var request = new GetLeaderboardRequest
             {
                 StatisticName = read_object.LeaderboardName,
-                MaxResultsCount = 100
+                MaxResultsCount = 100 //NOTE : this is the maximum number of results we can get from a playfab leaderboard
             };
 
             PlayFabClientAPI.GetLeaderboard(
@@ -45,7 +43,6 @@ namespace FishingCactus.OnlineLeaderboards
                 {
                     bool has_updated = TryUpdateReadObject( read_object, result.Leaderboard );
                     task_completion_source.TrySetResult( has_updated );
-
                 },
                 ( error ) =>
                 {
@@ -167,137 +164,5 @@ namespace FishingCactus.OnlineLeaderboards
                 return true;
             }
         }
-
-        //public override Task<bool> WriteToLeaderboard( IUniqueUserId user_id, LeaderboardWriteRequest write_request )
-        //{
-        //    if( !IsUserValid( user_id ) )
-        //    {
-        //        return Task.FromResult( false );
-        //    }
-
-        //    Log( Util.LogLevel.Info, "Writing to leaderboard" );
-
-        //    var task_completion_source = new TaskCompletionSource<bool>();
-
-        //    var request = new UpdatePlayerStatisticsRequest
-        //    {
-        //        Statistics = new List<StatisticUpdate>()
-        //        {
-        //            new StatisticUpdate
-        //            {
-        //                StatisticName = write_request.LeaderboardID,
-        //                Value = write_request.NewValue
-        //            }
-        //        }
-        //    };
-
-        //    PlayFabClientAPI.UpdatePlayerStatistics(
-        //        request,
-        //        ( result ) =>
-        //        {
-        //            Log( Util.LogLevel.Info, "Successfully updated leaderboard" );
-        //            task_completion_source.TrySetResult( true );
-        //        },
-        //        ( error ) =>
-        //        {
-        //            Log( Util.LogLevel.Error, $"Failed to update leaderboard : {error.GenerateErrorReport()}" );
-        //            task_completion_source.TrySetResult( false );
-        //        } );
-
-        //    return task_completion_source.Task;
-        //}
-
-        //public override Task<Leaderboard> ReadLeaderboard( LeaderboardReadRequest read_request )
-        //{
-        //    Log( Util.LogLevel.Info, "Getting leaderboard" );
-        //    var task_completion_source = new TaskCompletionSource<Leaderboard>();
-        //    var request = new GetLeaderboardRequest
-        //    {
-        //        StatisticName = read_request.LeaderboardID,
-        //        MaxResultsCount = read_request.MaximumResults
-        //    };
-
-        //    PlayFabClientAPI.GetLeaderboard(
-        //        request,
-        //        ( result ) =>
-        //        {
-        //            if( result.Leaderboard.Count == 0 )
-        //            {
-        //                Log( Util.LogLevel.Warning, "Leaderboard does not exist or has no entry" );
-        //                task_completion_source.TrySetResult( new Leaderboard() );
-        //            }
-        //            else
-        //            {
-        //                Log( Util.LogLevel.Info, "Found leaderboard" );
-        //                task_completion_source.TrySetResult( GetLeaderboardFromResult( result.Leaderboard, read_request.LeaderboardID ) );
-        //            }
-        //        },
-        //        ( error ) =>
-        //        {
-        //            Log( Util.LogLevel.Error, $"Failed to find leaderboard : {error.GenerateErrorReport()}" );
-        //            task_completion_source.TrySetResult( new Leaderboard() );
-        //        } );
-
-        //    return task_completion_source.Task;
-        //}
-
-        //public override Task<Leaderboard> ReadLeaderboardAroundUser( IUniqueUserId user_id, LeaderboardReadRequest read_request )
-        //{
-        //    if( !IsUserValid( user_id ) )
-        //    {
-        //        return Task.FromResult( new Leaderboard() );
-        //    }
-
-        //    Log( Util.LogLevel.Info, "Getting leaderboard" );
-
-        //    UniqueUserId id = user_id as UniqueUserId;
-        //    string playfab_id = id.UniqueId;
-
-        //    var task_completion_source = new TaskCompletionSource<Leaderboard>();
-        //    var request = new GetLeaderboardAroundPlayerRequest
-        //    {
-        //        PlayFabId = playfab_id,
-        //        MaxResultsCount = read_request.MaximumResults,
-        //        StatisticName = read_request.LeaderboardID
-        //    };
-
-        //    PlayFabClientAPI.GetLeaderboardAroundPlayer(
-        //        request,
-        //        ( result ) =>
-        //        {
-        //            Log( Util.LogLevel.Info, "Found leaderboard" );
-        //            task_completion_source.TrySetResult( GetLeaderboardFromResult( result.Leaderboard, read_request.LeaderboardID ) );
-        //        },
-        //        ( error ) =>
-        //        {
-        //            Log( Util.LogLevel.Error, $"Failed to find leaderboard {error.GenerateErrorReport()}" );
-        //            task_completion_source.TrySetResult( new Leaderboard() );
-        //        } );
-
-        //    return task_completion_source.Task;
-        //}
-
-        //private Leaderboard GetLeaderboardFromResult( List<PlayerLeaderboardEntry> result, string leaderboard_name )
-        //{
-        //    List<ILeaderboardEntry> leaderboardEntries = new List<ILeaderboardEntry>();
-        //    for( int i = 0; i < result.Count; i++ )
-        //    {
-        //        PlayerLeaderboardEntry entry = result[i];
-
-        //        leaderboardEntries.Add( new LeaderboardEntry
-        //        {
-        //            UserName = entry.DisplayName,
-        //            Score = entry.StatValue
-        //        } );
-        //    }
-
-        //    Leaderboard leaderboard = new Leaderboard()
-        //    {
-        //        LeaderboardID = leaderboard_name,
-        //        entries = leaderboardEntries
-        //    };
-
-        //    return leaderboard;
-        //}
     }
 }

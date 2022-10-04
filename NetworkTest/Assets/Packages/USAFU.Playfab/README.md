@@ -16,8 +16,10 @@ This is the PlayFab implementation of USAFU.
 - For instance if you want a queue with an Elo rule and a Latency rule, define a "Difference rule" with an attribute path "$.elo", and a "Region selection rule" with an attribute "latencies" 
 - The attributes must be serialized into a json
 <details><summary>In code, you will pass the custom attributes like this :</summary>
-  ```
-		[Serializable]
+
+```
+
+        [Serializable]
         public struct MatchmakingAttributes
     	{
         	public int elo;
@@ -31,7 +33,7 @@ This is the PlayFab implementation of USAFU.
         	public int latency;
         }
         
-	    MatchmakingAttributes attributes = new MatchmakingAttributes
+	MatchmakingAttributes attributes = new MatchmakingAttributes
         {
            	elo = 50,
             	latencies = new Latencies[]
@@ -44,20 +46,22 @@ This is the PlayFab implementation of USAFU.
                 }
         };
         
-	    string jsonAttributes = JsonUtility.ToJson( attributes );
+	string jsonAttributes = JsonUtility.ToJson( attributes );
 	    
-	    USAFUCore.Get().OnlineSessions.StartMatchmaking(
-            new List<IUniqueUserId> { USAFUCore.Get().UserSystem.GetUniqueUserId( 0 ) },
-            "My_Matchmaking_Queue",
-            new OnlineSessionSettings
+	USAFUCore.Get().OnlineSessions.StartMatchmaking(
+        new List<IUniqueUserId> { USAFUCore.Get().UserSystem.GetUniqueUserId( 0 ) },
+        "My_Matchmaking_Queue",
+        new OnlineSessionSettings
+        {
+            Settings = new Dictionary<string, OnlineSessionSetting>
             {
-                Settings = new Dictionary<string, OnlineSessionSetting>
-                {
-                    {StringConstants.MATCHMAKING_ATTRIBUTES, new OnlineSessionSetting{ Data = json} },
-                    {StringConstants.MATCHMAKING_TIME, new OnlineSessionSetting { Data = "30" } }
-                }
-            } );
+                {StringConstants.MATCHMAKING_ATTRIBUTES, new OnlineSessionSetting{ Data = json} },
+                {StringConstants.MATCHMAKING_TIME, new OnlineSessionSetting { Data = "30" } }
+            }
+        } );
    ```
+   
+   </details>
 
 ### Upload a server build
 - Make a dedicated server build 

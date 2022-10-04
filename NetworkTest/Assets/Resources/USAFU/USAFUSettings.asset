@@ -9,14 +9,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 218f55cfa68c93b4a8bb036c3aa59c4a, type: 3}
+  m_Script: {fileID: 11500000, guid: bce61429c79f29f438973d8831ab6bdd, type: 3}
   m_Name: USAFUSettings
   m_EditorClassIdentifier: 
   UseAchievements: 0
   UseSaveSystem: 0
   UseOnlineSessions: 1
   UseOnlineLeaderboards: 1
-  RequiresOnlineServiceConnection: 1
+  RequiresOnlineServiceConnection: 0
   SaveFileExtensionWithDot: .sav
   EpicGameStore:
     productId: 
@@ -53,6 +53,5 @@ MonoBehaviour:
     DestinationApiName: 
   PlayFab:
     ConnectWithDevice: 1
-    BuildID: e33c5fd7-42d9-4493-8248-d19e72d17bce
-    PreferredRegions:
-    - NorthEurope
+    BuildID: 
+    PreferredRegions: []

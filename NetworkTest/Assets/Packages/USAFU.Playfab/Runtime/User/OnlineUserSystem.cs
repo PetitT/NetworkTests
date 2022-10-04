@@ -27,11 +27,11 @@ namespace FishingCactus.User
                 {
                     Log( Util.LogLevel.Info, "Found user info" );
 
+                    var user_system = USAFUCore.Get().UserSystem;
+
                     foreach( var data in result.Data )
                     {
-                        USAFUCore.Get().UserSystem.GetUserAccount(
-                           USAFUCore.Get().UserSystem.GetUniqueUserId( 0 ))
-                        .SetUserAttributeByName( data.Value.Value, data.Key );
+                        user_system.GetUserAccount( user_system.GetUniqueUserId( 0 ) ).SetUserAttributeByName( data.Value.Value, data.Key );
                     }
 
                     task_completion_source.TrySetResult( true );

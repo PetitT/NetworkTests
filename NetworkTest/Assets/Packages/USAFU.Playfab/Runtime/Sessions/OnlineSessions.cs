@@ -139,11 +139,17 @@ namespace FishingCactus.OnlineSessions
             {
                 return Task.FromResult( false );
             }
+            if( !desired_session.Session.SessionSettings.Settings.TryGetValue( StringConstants.CONNEXION_STRING, out OnlineSessionSetting setting ) )
+            {
+                Log( LogLevel.Warning, $"Desired session settings must contain a {StringConstants.CONNEXION_STRING} key" );
+                return Task.FromResult( false );
+            }
+
 
             CurrentSessionState = OnlineSessionState.Pending;
             LobbyJoinedTask = new TaskCompletionSource<bool>();
 
-            var connexion_string = desired_session.Session.SessionSettings.Settings[StringConstants.CONNEXION_STRING].Data;
+            var connexion_string = setting.Data;
             var member_properties = new Dictionary<string, string>();
 
             Log( Util.LogLevel.Info, $"Joining lobby : {connexion_string}" );
@@ -203,7 +209,7 @@ namespace FishingCactus.OnlineSessions
             LobbyLeaveTask.TrySetResult( true );
         }
 
-        public Task<bool> UpdateSession( string session_name, OnlineSessionSettings updated_session_settings )
+        public Task<bool> UpdateSession( string session_name, OnlineSessionSettings updated_session_settings, bool should_update_online_data )
         {
             if( GetNamedSession( session_name ) == null )
             {
@@ -307,7 +313,7 @@ namespace FishingCactus.OnlineSessions
                         }
                     };
 
-                    UpdateSession( session_name, new_settings );
+                    UpdateSession( session_name, new_settings, true );
                     OnStartSessionComplete?.Invoke( session_name, true );
                     task_completion_source.TrySetResult( true );
                 },
@@ -382,30 +388,40 @@ namespace FishingCactus.OnlineSessions
         {
             Log( Util.LogLevel.Info, $"Matchmaking Status changed : {ticket.Status}" );
 
-            if( ticket.Status == MatchmakingTicketStatus.WaitingForMatch )
+            switch( ticket.Status )
             {
-                Log( Util.LogLevel.Info, "Succesfully joined matchmaking" );
-                MatchmakingBeginTask?.TrySetResult( true );
-            }
+                case MatchmakingTicketStatus.WaitingForMatch:
+                    {
+                        Log( Util.LogLevel.Info, "Succesfully joined matchmaking" );
+                        MatchmakingBeginTask?.TrySetResult( true );
+                        break;
+                    }
 
-            if( ticket.Status == MatchmakingTicketStatus.Failed )
-            {
-                Log( Util.LogLevel.Warning, "Matchmaking ticket failed to find a match" );
-                MatchmakingBeginTask?.TrySetResult( false );
-            }
+                case MatchmakingTicketStatus.Matched:
+                    {
+                        Log( Util.LogLevel.Info, "Matchmaking ticket found a match" );
+                        MatchmakingCancelTask?.TrySetResult( false );
+                        break;
+                    }
 
-            if( ticket.Status == MatchmakingTicketStatus.Canceled )
-            {
-                Log( Util.LogLevel.Info, "Matchmaking ticket was canceled" );
-                MatchmakingCancelTask?.TrySetResult( true );
-                MatchmakingBeginTask?.TrySetResult( false );
-                OnMatchmakingCancelComplete?.Invoke( CurrentMatchmakingInfo.QueueName, true );
-            }
+                case MatchmakingTicketStatus.Canceled:
+                    {
+                        Log( Util.LogLevel.Info, "Matchmaking ticket was canceled" );
+                        MatchmakingCancelTask?.TrySetResult( true );
+                        MatchmakingBeginTask?.TrySetResult( false );
+                        OnMatchmakingCancelComplete?.Invoke( CurrentMatchmakingInfo.QueueName, true );
+                        break;
+                    }
 
-            if( ticket.Status == MatchmakingTicketStatus.Matched )
-            {
-                Log( Util.LogLevel.Info, "Matchmaking ticket found a match" );
-                MatchmakingCancelTask?.TrySetResult( false );
+                case MatchmakingTicketStatus.Failed:
+                    {
+                        Log( Util.LogLevel.Warning, "Matchmaking ticket failed to find a match" );
+                        MatchmakingBeginTask?.TrySetResult( false );
+                        break;
+                    }
+
+                default:
+                    break;
             }
         }
 
