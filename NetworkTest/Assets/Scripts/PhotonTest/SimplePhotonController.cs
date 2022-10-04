@@ -13,21 +13,20 @@ public class SimplePhotonController : NetworkBehaviour
     private void Start()
     {
         ncc = GetComponent<NetworkCharacterControllerPrototype>();
-
-        NetworkRunner n = new NetworkRunner();
     }
 
     public override void FixedUpdateNetwork()
     {
         if (GetInput(out OculusInputs inputs))
         {
-            if (inputs.IsDown(OculusInputs.BUTTON_JUMP))
-            {
-
-            }
-
-
             ncc?.Move(new Vector3(inputs.movement.x,0,inputs.movement.y));
         }
+    }
+
+    [BehaviourButtonAction("Say stuff")]
+    private void SayStuff()
+    {
+        Debug.Log( $"State authority = {Object.HasStateAuthority}" );
+        Debug.Log( $"Input authority = {Object.HasInputAuthority}" );
     }
 }

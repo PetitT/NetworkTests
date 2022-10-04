@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using FishingCactus;
 
 public class PhotonTest : MonoBehaviour
 {
@@ -110,15 +111,11 @@ public class PhotonTest : MonoBehaviour
 
     private void OnGUI()
     {
-        if (!PlayFabManager.Instance.IsLoggedIn)
+        if (USAFUCore.Get().UserSystem.GetLoginStatus(0) == FishingCactus.User.ELoginStatus.NotLoggedIn)
         {
             if (GUI.Button(new Rect(0, 0, 100, 50), "Device Login"))
             {
-                PlayFabManager.Instance.LoginManager.LogIn(SystemInfo.deviceUniqueIdentifier);
-            }
-            if (GUI.Button(new Rect(0, 50, 100, 50), "Random Login"))
-            {
-                PlayFabManager.Instance.LoginManager.LogIn(UnityEngine.Random.Range(10000,99999).ToString());
+                USAFUCore.Get().UserSystem.Login(0);
             }
         }
         else
